@@ -1,0 +1,16 @@
+## Interface: 11200
+## Title: Aegis |cff1fff1f智能防战|r
+## Author: Lamueno
+## Notes: 
+## DefaultState: Enabled
+## SavedVariablesPerCharacter: KLHTM_SavedVariables
+## LoadOnDemand: 0
+## Version: 0.0.1
+Code\Core.lua
+Code\Localisation\KTM_Localisation.lua
+Code\Localisation\KTM_enUS.lua
+Code\Localisation\KTM_deDE.lua
+Code\Localisation\KTM_frFR.lua
+Code\Localisation\KTM_zhCN.lua
+Code\Localisation\KTM_zhTW.lua
+Code\Localisation\KTM_koKR.lua
