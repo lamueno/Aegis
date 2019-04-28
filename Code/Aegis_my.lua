@@ -3,7 +3,7 @@
 -- Add the module to the tree
 local mod = aegis
 local me = {}
-mod.skills = me
+mod.my = me
 
 me.myevents = {
     "CHAT_MSG_COMBAT_SELF_MISSES",  -- 你未命中一个生物时触发
@@ -38,42 +38,6 @@ end
 me.onevent = function()
 end
 
-
--- Distance table records all skills which are relevant to distance.
-me.distancetable = {
-    [5] = {
-        "Ability_Warrior_Sunder",
-        "Ability_Warrior_DecisiveStrike",
-        "Ability_ThunderBolt",
-        "Ability_Warrior_Disarm",
-        "INV_Gauntlets_04",
-        "Ability_MeleeDamage",
-        "Ability_Warrior_PunishingBlow",
-        "Ability_Warrior_Revenge",
-        "Ability_Gouge",
-        "INV_Sword_48",
-        "ability_warrior_savageblow",
-        "INV_Shield_05",
-        "Spell_Nature_Bloodlust"
-    },
-    [8] = {
-        "Ability_Marksmanship",
-        "Ability_Throw",
-        "Ability_Warrior_Charge",
-        "Ability_Rogue_Sprint"
-    },
-    [10] = {
-        "Ability_GolemThunderClap",
-    },
-    [25] = {
-        "Ability_Warrior_Charge",
-        "Ability_Rogue_Sprint"
-    },
-    [30] = {
-        "Ability_Marksmanship",
-        "Ability_Throw",
-    }
-}
 
 me.actionslot = {}
 
@@ -139,5 +103,96 @@ me.distance = function()
     return max, min
 end
 
+me.spell = mod.data.spell
 
+me.talents = function()
 
+    local rank
+    
+    --Calculate the cost of Heroic Strike based on talents
+    _, _, _, _, rank = GetTalentInfo(1, 1)
+    if rank > 0 then
+        me.spell["heroic_strike"].cost = 15 - tonumber(rank)
+        mod.out.debug(mod.string.get("talent", "imp_heroic_strike"))
+    end
+    
+	--Calculate the rage retainment of Tactical Mastery
+    _, _, _, _, rank = GetTalentInfo(1, 5)
+    me.tactical_mastery = tonumber(rank) * 5
+    mod.out.debug(mod.string.get("talent", "tactical_mastery"))
+
+    --Check for Piercing Howl
+	_, _, _, _, rank = GetTalentInfo(2, 6)
+    if rank > 0 then
+        me.spell["piercing_howl"].enabled = true
+        mod.out.debug(mod.string.get("talent", "piercing_howl"))
+	else
+		me.spell["piercing_howl"].enabled = false
+    end
+    
+	--Calculate the cost of Sunder Armor based on talents
+    _, _, _, _, rank = GetTalentInfo(3, 10)
+    if rank > 0 then
+        me.spell["sunder_armor"].cost = 15 - tonumber(rank)
+        mod.out.debug(mod.string.get("talent", "imp_sunder_armor"))
+    end
+    
+    --Check for Death Wish
+	_, _, _, _, rank = GetTalentInfo(2, 13)
+    if rank > 0 then
+        me.spell["death_wish"].enabled = true
+        mod.out.debug(mod.string.get("talent", "death_wish"))
+    else
+        me.spell["death_wish"].enabled = false
+	end
+    
+    --[[
+    -- Check for Improved Berserker Rage
+    _, _, _, _, rank = GetTalentInfo(2, 15)
+	if currRank > 0 then
+		Debug("强化狂暴之怒")
+		FuryBerserkerRage = true
+	else
+		FuryBerserkerRage = false
+	end
+	--Check for Flurry
+	_, _, _, _, rank = GetTalentInfo(2, 16)
+	if currRank > 0 then
+		Debug("乱舞")
+		FuryFlurry = true
+	else
+		FuryFlurry = false
+	end
+
+	--Check for Bloodthirst
+	_, _, _, _, rank = GetTalentInfo(2, 17)
+	if currRank > 0 then
+		Debug("嗜血")
+		FuryBloodthirst =  true
+	else
+		FuryBloodthirst = false
+	end
+    ]]
+ 
+	--Check for Shield Slam
+	_, _, _, _, rank = GetTalentInfo(3, 17)
+    if rank > 0 then
+        me.spell["shield_slam"].enabled = true
+        mod.out.debug(mod.string.get("talent", "shield_slam"))
+	else
+		me.spell["shield_slam"].enabled = false
+	end
+	if UnitRace("player") == RACE_ORC then
+		Debug("血性狂暴")
+		FuryRacialBloodFury = true
+	else
+		FuryRacialBloodFury = false
+	end
+	if UnitRace("player") == RACE_TROLL then
+		Debug("狂暴")
+		FuryRacialBerserking = true
+	else
+		FuryRacialBerserking = false
+	end
+	FuryTalents = true
+end

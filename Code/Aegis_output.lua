@@ -32,3 +32,10 @@ me.print = function(message, chatframeindex)
     chatframe:AddMessage(message)
 
 end
+
+me.debug = function(message, chatframeindex)
+
+    if AegisDB["debug"] then
+        me.print(message,chatframeindex)
+    end
+end
