@@ -6,7 +6,7 @@ mod.console = me
 me.onload = function()
 
     -- Setup command line handler
-    SLASH_AEGIS1 = "/aegis"
+    SLASH_Aegis1 = "/aegis"
     SlashCmdList["Aegis"] = me.consolecommand
 
     -- create all the CLUI tables
@@ -148,7 +148,7 @@ me.runclui = function(commands, clui)
 				
 				-- print
 				message = message .. "|cff8888ff."
-				mod.output.print(message)
+				-- mod.output.trace("info", me, "runclui", message)
 				
 				-- run
 				branch.output(commands[1], commands)
@@ -234,18 +234,11 @@ me.defineclui = function()
 
     }
 
-    me.subclui.cast = {
-        description = "Do programmed actions",
-        {
-  
-        }
-    }
-
-
     me.clui = {
         description = nil,
         branches = {
-            {
+			
+            {  -- Disable
                 ["command"] = "disable",
                 ["description"] = "Emergency stop: disables events / onupdate.",
                 ["output"] = function()
@@ -258,7 +251,8 @@ me.defineclui = function()
                     end
                 end
             },
-            {
+			
+			{  -- Enable
                 ["command"] = "enable",
                 ["description"] = "Restart the mod after an emergency stop.",
                 ["output"] = function()
@@ -271,22 +265,22 @@ me.defineclui = function()
                     end
                 end
             },
-            {
+            {  -- tank
                 command = "tank",
                 description = "Build threat and tank mob, mainly as MT",
                 output = mod.combat.cast.tank
             },
-            {
+            {  -- charge
                 command = "charge",
                 description = "Charge and Intercept in one",
                 output = mod.combat.cast.charge
             },
-            {
+            {  -- kick
                 command = "kick",
                 description = "Interrupt enemy casting",
-                output = mod.combat.cast.interrupt
+                output = mod.combat.cast.kick
             },
-            {
+            {  -- pull
                 command = "pull",
                 description = "Taunt and Mocking Blow in one",
                 output = mod.combat.cast.pull

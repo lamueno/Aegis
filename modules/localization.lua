@@ -24,11 +24,6 @@ end
 me.reverselookup = 
 {
 	spell = true,
-	boss = 
-	{
-		name = true,
-		spell = true,
-	},
 }
 
 --[[
@@ -46,8 +41,8 @@ me.createreverselookup = function(localtree, reversetree, parentkey)
 		localtable = localtree[key]
 		
 		if localtable == nil then
-			if mod.out.checktrace("warning", me, "lookup") then
-				mod.out.printtrace(string.format("Can't complete the localisation reverse lookup because the strings for %s.%s haven't been localised!", parentkey, key))
+			if mod.output.checktrace("warning", me, "lookup") then
+				mod.output.printtrace(string.format("Can't complete the localisation reverse lookup because the strings for %s.%s haven't been localised!", parentkey, key))
 			end
 		elseif type(value) == "table" then
 			me.createreverselookup(localtree[key], value, parentkey .. "." .. key)
@@ -97,8 +92,8 @@ me.unlocalise = function(key1, key2, key3, key4, key5)
 			
 			else
 				-- error occur!
-				if mod.out.checktrace("error", me, "lookup") then
-					mod.out.printtrace(string.format("Localisation reverse lookup error. No subtable for %s in the keyset %s.", me.stringkeys[x], me.keysettostring()))
+				if mod.output.checktrace("error", me, "lookup") then
+					mod.output.printtrace(string.format("Localisation reverse lookup error. No subtable for %s in the keyset %s.", me.stringkeys[x], me.keysettostring()))
 				end
 				return nil
 			end
@@ -156,16 +151,16 @@ me.get = function(key1, key2, key3, key4, key5)
 		if stringvalue == nil then
 			-- No string in the english version either. The keys must have been wrong.
 			
-			if mod.out.checktrace("error", me, "get") then
-				mod.out.printtrace(string.format("The localisation identifier |cffffff00%s|r does not exist.", me.keysettostring()))
+			if mod.output.checktrace("error", me, "get") then
+				mod.output.printtrace(string.format("The localisation identifier |cffffff00%s|r does not exist.", me.keysettostring()))
 			end
 			return "."
 		
 		else
 			
 			-- Found the english version. Use it this time. 
-			if mod.out.checktrace("warning", me, "get") then
-				mod.out.printtrace(string.format("The |cffffff00%s|r locale has no value for the key |cffffff00%s|r.", me.mylocale, me.keysettostring()))
+			if mod.output.checktrace("warning", me, "get") then
+				mod.output.printtrace(string.format("The |cffffff00%s|r locale has no value for the key |cffffff00%s|r.", me.mylocale, me.keysettostring()))
 			end
 			return stringvalue
 		end
@@ -237,7 +232,7 @@ me.testlocalisation = function(locale)
 	end
 	
 	if me.data[locale] == nil then
-		mod.out.print(string.format("Sorry, there's no localisation at all for the |cffffff00%s|r locale.", locale))
+		mod.output.print(string.format("Sorry, there's no localisation at all for the |cffffff00%s|r locale.", locale))
 		return
 	end
 	
@@ -258,10 +253,10 @@ me.testlocalisationbranch = function(english, mine, linkstring)
 		
 		if mine[key] == nil then
 			if type(value) == "table" then
-				mod.out.print(string.format("Missing the set of keys |cffffff00%s%s|r.", linkstring, key))
+				mod.output.print(string.format("Missing the set of keys |cffffff00%s%s|r.", linkstring, key))
 				errors = errors + 1
 			else
-				mod.out.print(string.format("Missing the key |cffffff00%s%s|r. The english value is |cff3333ff%s|r", linkstring, key, value))
+				mod.output.print(string.format("Missing the key |cffffff00%s%s|r. The english value is |cff3333ff%s|r", linkstring, key, value))
 				errors = errors + 1
 			end
 			
@@ -278,10 +273,10 @@ me.testlocalisationbranch = function(english, mine, linkstring)
 		
 		if english[key] == nil then
 			if type(value) == "table" then
-				mod.out.print(string.format("The set of keys |cffffff00%s%s|r does not exist in the english version, so is probably no longer used.", linkstring, key))
+				mod.output.print(string.format("The set of keys |cffffff00%s%s|r does not exist in the english version, so is probably no longer used.", linkstring, key))
 				errors = errors + 1
 			else
-				mod.out.print(string.format("The key |cffffff00%s%s|r does not exist in the english version, so is probably no longer used. The current value is |cff3333ff%s|r", linkstring, key, value))
+				mod.output.print(string.format("The key |cffffff00%s%s|r does not exist in the english version, so is probably no longer used. The current value is |cff3333ff%s|r", linkstring, key, value))
 				errors = errors + 1
 			end
 		end
@@ -289,7 +284,7 @@ me.testlocalisationbranch = function(english, mine, linkstring)
 	
 	-- print out total errors (base case only)
 	if linkstring == "" then
-		mod.out.print(string.format("Found |cffffff00%d|r errors in total.", errors))
+		mod.output.print(string.format("Found |cffffff00%d|r errors in total.", errors))
 	end
 	
 	return errors

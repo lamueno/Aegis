@@ -1,9 +1,28 @@
 ## Interface: 11200
-## Title: Aegis |cff1fff1f智能防战|r
+## Title: |cff1fff1fAegis|r
 ## Author: Lamueno
-## Notes: 
-## DefaultState: Enabled
-## SavedVariablesPerCharacter: AegisDB
-## LoadOnDemand: 0
+## Notes: A programmed support to prot warrior
 ## Version: 0.0.1
-Code\Aegis_core.lua
+## SavedVariablesPerCharacter: AegisDB
+
+# core
+Aegis.lua
+
+# modules
+modules\combat.lua
+modules\console.lua
+modules\data.lua
+modules\diagnostics.lua
+modules\localization.lua
+modules\my.lua
+modules\output.lua
+modules\target.lua
+
+# libs
+libs\libspell.lua
+
+# locales & translations
+env\Aegis_zhCN.lua
+
+# frame
+Aegis.xml

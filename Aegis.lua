@@ -8,7 +8,7 @@ Managing your Variables / Methods
 
 -- initialize table
 aegis = {}
-local mod = aegis
+local me = aegis
 me.frame = nil  -- set at runtime
 
 
@@ -27,9 +27,15 @@ me.onload = function()
     --  find frame
     me.frame = AegisFrame
 
+    -- load string module before others
+    if type(me.string) == "table" and me.string.isenabled ~= "false" then
+        me.string.onload()
+        me.string.isloaded = true
+    end
+
     --  initialize all submodules
-    for key, subtable in mod do
-        if type(subtable) == "table" and subtable.onload and subtable.isenabled ~= "false" then
+    for key, subtable in me do
+        if type(subtable) == "table" and subtable.onload and subtable.isenabled ~= "false" and subtable.isloaded ~= true then
             subtable.onload()
         end
     end
@@ -37,7 +43,7 @@ me.onload = function()
     me.isloaded = true
 
     -- register events. Strictly after all modules have been loaded.
-    for key, subtable in mod do
+    for key, subtable in me do
         if type(subtable) == "table" and subtable.myevents then
             
             me.events[key] = {}
@@ -50,14 +56,12 @@ me.onload = function()
     end
 
     -- onloadcomplete
-    for key, subtable in mod do
+    for key, subtable in me do
         if type(subtable) == "table" and subtable.onloadcomplete and subtable.isenabled ~= "false" then
             subtable.onloadcomplete()
         end
     end
 
-    -- Print load message
-    -- todo
 end
 
 -- onupdate
@@ -75,7 +79,8 @@ me.onupdate = function()
 	
 	for key, subtable in me do
 		if type(subtable) == "table" and subtable.onupdate and subtable.isenabled ~= "false" then
-			-- me.diag.logmethodcall(key, "onupdate")
+            subtable.onupdate()
+            me.diag.logmethodcall(key, "onupdate")
 		end
 	end
 end
@@ -88,7 +93,7 @@ me.onevent = function()
         return
     end
 
-    for key, subtable in mod do
+    for key, subtable in me do
         -- 1) The subtable is a valid module - is a table and has a .onevent property.
 		-- 2) The subtable is not disabled
 		-- 3) The subtable has registered the event

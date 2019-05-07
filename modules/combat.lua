@@ -4,18 +4,62 @@ local mod = aegis
 local me = {}
 mod.combat = me
 
-me.state = {}
-me.state.dance = {}
+me.state = {
+    dance = {},
+    interrupt = {},
+    overpower = {},
+    revenge = {},
+
+    autoattack = nil,
+    disarmed = nil,
+    incapacitated = nil,
+
+    lastsunder = 0,
+}
 me.cast = {}
 me.use = {}
 
+------------------------------------------------------------------------------
+-- Special Methods from Core.lua
+------------------------------------------------------------------------------
+me.myevents = {
+    "CHAT_MSG_COMBAT_SELF_MISSES",  -- 你未命中一个生物时触发
+    "CHAT_MSG_SPELL_SELF_DAMAGE",  -- 你施放一个法术伤害时触发
+    "CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF",  -- 当一个 buff (或可能的物品) 对对手的行为造成伤害... 如荆棘术.
+
+    "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE",
+    "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF",
+    "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF",
+    "CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE",
+
+    "CHAT_MSG_SPELL_SELF_DAMAGE",
+    "CHAT_MSG_COMBAT_SELF_MISSES",
+
+    "CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE",
+    "CHAT_MSG_SPELL_AURA_GONE_SELF",
+
+    "CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES",
+
+    "PLAYER_TARGET_CHANGED",
+    
+    "START_AUTOREPEAT_SPELL",
+    "STOP_AUTOREPEAT_SPELL",
+
+    -- "PLAYER_ENTER_COMBAT",
+    -- "PLAYER_LEAVE_COMBAT",
+    -- "PLAYER_REGEN_ENABLED",
+    -- "PLAYER_REGEN_DISABLED",
+
+    "CHAT_MSG_SPELL_FAILED_LOCALPLAYER",
+}
 me.event = function()
 
     local sequence = {
+        AutoAttack,
         TriggerDebuffed,
         TriggerInterrupt,
         TriggerOverPower,
-        TriggerRevenge
+        TriggerRevenge,
     }
 
     for _, trigger in pairs(sequence) do
@@ -145,6 +189,14 @@ local function TriggerDebuffed()
     end
 end
 
+local function AutoAttack()
+    if event == "START_AUTOREPEAT_SPELL" then
+        me.state.autoattack = true
+    elseif event == "STOP_AUTOREPEAT_SPELL" then
+        me.state.autoattack = false
+    end
+end
+
 
 ------------------------------------------------------------------------------
 -- Target
@@ -166,6 +218,7 @@ me.statuscheck = function()
     ) then
         return true
     else
+        mod.output.trace("info", me, "spell", "Combat Status check failed.")
         return false
     end
 end
@@ -232,7 +285,7 @@ me.cast.stancedance = function()
 
     -- Reset to primary stance
     if primary ~= mod.my.activestance and not state.dancing then
-        if SpellCanCast(spellname) then
+        if mod.libspell.SpellCanCast(spellname) then
             CastShapeshiftForm(primary)
             mod.output.tracespellcast(spellname)
             return true
@@ -240,13 +293,20 @@ me.cast.stancedance = function()
     end
 end
 
+me.cast.AutoAttack = function()
+    if mod.db.settings["spell_option"]["autoattack"] and mod.my.incombat then
+        AttackTarget()
+    end
+end
+
+
 me.cast.BattleShout = function()
 
     local name = "battle_shout"
 
     if not mod.my.buffed(mod.string.get("spell", name))
-        and SpellCanCast(name)
-        and SpellReadyIn(name)    
+        and mod.libspell.SpellCanCast(name)
+        and mod.libspell.SpellReadyIn(name)    
     then
         if me.cast.standardcast(name) then
             return true
@@ -259,7 +319,7 @@ me.cast.BloodRage = function()
 
     local name = "blood_rage"
 
-    if SpellCanCast(name) and SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
         if me.cast.standardcast(name) then
             return true
         end
@@ -269,7 +329,7 @@ end
 
 me.cast.Execute = function()
 
-    if SpellCanCast("execute") and me.target.healthpct <= 20 and SpellReadyIn("execute") == 0 then
+    if mod.libspell.SpellCanCast("execute") and me.target.healthpct <= 20 and mod.libspell.SpellReadyIn("execute") == 0 then
         if me.cast.standardcast("execute") then
             return true
         end
@@ -279,7 +339,7 @@ end
 
 me.cast.HeroicStrike = function()
 
-    if (SpellCanCast("heroic_strike") and SpellReadyIn("heroic_strike") == 0
+    if (mod.libspell.SpellCanCast("heroic_strike") and mod.libspell.SpellReadyIn("heroic_strike") == 0
         and mod.my.rage >= mod.db.settings["spell_option"]["nextattack_rage"]
     ) then
         if me.cast.standardcast("heroic_strike") then
@@ -303,7 +363,7 @@ me.cast.Overpower = function()
         return
     end
 
-    if SpellCanCast("overpower") and SpellReadyIn("overpower") == 0 then    
+    if mod.libspell.SpellCanCast("overpower") and mod.libspell.SpellReadyIn("overpower") == 0 then    
         if me.cast.standardcast("overpower") then
             return true
         end
@@ -325,7 +385,7 @@ me.cast.Pummel = function()
         return
     end
     
-    if SpellCanCast("pummel") and SpellReadyIn("pummel") == 0 then
+    if mod.libspell.SpellCanCast("pummel") and mod.libspell.SpellReadyIn("pummel") == 0 then
         if me.cast.standardcast("pummel") then
             return true
         end
@@ -349,7 +409,7 @@ me.cast.Revenge = function()
         return
     end
 
-    if SpellCanCast(name) and SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
         if me.cast.standardcast(name) then
             return true
         end
@@ -372,7 +432,7 @@ me.cast.ShieldBash = function()
         return
     end
 
-    if SpellCanCast("shield_bash") and SpellReadyIn("shield_bash") == 0 then
+    if mod.libspell.SpellCanCast("shield_bash") and mod.libspell.SpellReadyIn("shield_bash") == 0 then
         if me.cast.standardcast("shield_bash") then
             return true
         end
@@ -384,13 +444,15 @@ me.cast.ShieldSlam = function ()
 
     local name = "shield_slam"
 
-    if SpellCanCast(name) then
-        if SpellReadyIn(name) == 0 then
+    if mod.libspell.SpellCanCast(name) then
+        if mod.libspell.SpellReadyIn(name) == 0 then
             CastSpellByName(mod.string.get("spell", name))
             mod.output.tracespellcast(name)
+            return true
 
-        elseif SpellReadyIn(name) <= 1.5 then
+        elseif mod.libspell.SpellReadyIn(name) <= 1.5 then
             mod.output.trace("info", me, "cast", mod.string.get("translation", "Shield Slam is almost ready, wait"))
+            return false
         end
     end
 end
@@ -408,7 +470,7 @@ me.cast.SunderArmor = function()
         end
     end
 
-    if SpellCanCast(name) and SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
 
         if KLHTM_Sunder then
             KLHTM_Sunder()
@@ -426,7 +488,7 @@ me.cast.Taunt = function()
 
     local name = "taunt"
 
-    if SpellCanCast(name) and SpellReadyIn(name) and UnitName("targettarget") ~= mod.my.name then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) and UnitName("targettarget") ~= mod.my.name then
         if me.cast.standardcast(name) then
             return true
         end
@@ -438,7 +500,7 @@ me.cast.ThunderClap = function()
 
     local name = "thunder_clap"
 
-    if SpellCanCast(name) and SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
         if me.cast.standardcast(name) then
             return true
         end
@@ -450,7 +512,33 @@ me.cast.charge = function()
 
 end
 
+me.cast.tank = function()
+	local action_sequence = {
+        me.cast.AutoAttack,
+		-- me.cast.stancedance,
+		me.cast.Revenge,
+		me.cast.ShieldSlam,
+		-- me.cast.ShieldBlock,
+		me.cast.SunderArmor,
+		me.cast.HeroicStrike,
+		me.cast.BattleShout,
+		me.cast.BloodRage,
+	}
+	
+	if me.statuscheck() then
+		for _, spell in pairs(action_sequence) do
+			if spell() then break end
+		end
+	end
+end
 
+me.cast.kick = function()
+
+end
+
+me.cast.pull = function()
+
+end
 
 me.cast.shoot = function()
     
@@ -470,7 +558,7 @@ me.cast.shoot = function()
         return false
     end
 
-    if SpellReadyIn(name) == 0 then
+    if mod.libspell.SpellReadyIn(name) == 0 then
         CastSpellByName(name)
         mod.output.tracespellcast(name)
     end
@@ -478,81 +566,3 @@ me.cast.shoot = function()
 end
 
 
-------------------------------------------------------------------------------
--- Spell Related Functions
-------------------------------------------------------------------------------
-
---[[
-Given a spell name, SpellReadyIn returns the cooldown time left for it.
-If the spell name does not exist in spellbook 
-]] 
-local function SpellReadyIn(name)
-    
-    -- GCD also affects the result of `GetSpellCooldown`
-    local start, duration = GetSpellCooldown(mod.my.reversespellbook(name), BOOKTYPE_SPELL)
-    local cd
-    if duration == 0 then
-        cd = 0
-    else
-        cd = start + duration - GetTime()
-    end
-    return cd
-end
-
-local function SpellCanCast(name, forcedance)
-
-    if not forcedance then 
-        forcedance = false
-    end
- 
-
-    -- Settings check
-    if mod.db.settings.disabledspell[name] == true then
-        return false
-    end
-
-    -- Meta Check
-    local meta = mod.db.spell[name]
-    
-    if meta then
-        -- Cost
-        if meta.cost then
-            if mod.my.rage < meta.cost then
-                return false
-            end
-        end
-    
-        -- Distance
-        if meta.distance then
-            if mod.my.distance < meta.distance.min
-              or mod.my.distance > meta.distance.max then
-                return false
-            end
-        end
-    
-        -- Stance
-        if meta.stance then
-            if not (meta.stance[mod.my.activestance] and mod.my.dansable and forcedance) then
-                return false
-            end 
-        end
-    
-        -- Shielded
-        if meta.shielded then
-            if not mod.my.shielded then
-                return false
-            end
-        end
-    
-        -- Weaponed
-        if meta.weaponed then
-            if not mod.my.weaponed then
-                return false
-            end
-        end    
-    
-    else 
-        mod.output.trace("error", me, "spell", string.format("No spell meta for %s.", name))
-        return false
-    end
-end

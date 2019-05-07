@@ -9,27 +9,8 @@ mod.my = me
 -- Special Methods from Core.lua
 ------------------------------------------------------------------------------
 me.myevents = {
-    "CHAT_MSG_COMBAT_SELF_MISSES",  -- 你未命中一个生物时触发
-    "CHAT_MSG_SPELL_SELF_DAMAGE",  -- 你施放一个法术伤害时触发
-    "CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF",  -- 当一个 buff (或可能的物品) 对对手的行为造成伤害... 如荆棘术.
-
-    "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE",
-    "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF",
-    "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF",
-    "CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE",
-
-    "CHAT_MSG_SPELL_SELF_DAMAGE",
-    "CHAT_MSG_COMBAT_SELF_MISSES",
-
-    "CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE",
-    "CHAT_MSG_SPELL_AURA_GONE_SELF",
-
-    "CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES",
-
-    "PLAYER_TARGET_CHANGED",
+    "ACTIONBAR_SLOT_CHANGED",
     "CHARACTER_POINTS_CHANGED",
-
-    "CHAT_MSG_SPELL_FAILED_LOCALPLAYER",
 }
 
 me.onload = function()
@@ -37,7 +18,7 @@ me.onload = function()
     me.scanspellbook()
     me.scantalents()
     me.scanaction()
-
+    
 end
 
 me.onupdate = function ()
@@ -48,6 +29,14 @@ end
 
 
 me.onevent = function()
+
+    if event == "CHARACTER_POINTS_CHANGED" then
+        me.scantalents()
+
+    elseif event == "ACTIONBAR_SLOT_CHANGED" then
+        me.scanaction()
+    
+    end
 end
 
 -----------------------------------------
@@ -79,22 +68,23 @@ _, me.armor = UnitArmor("player")
 ------------------------------------------------------------------------------
 me.spellbook = {}
 me.reversespellbook = {}
+
 me.scanspellbook = function ()
     
     local spellid = 1
     while true do
         
-        local name = GetSpellName(spellid, BOOKTYPE_SPELL)
+        local name = GetSpellName(spellid, "spell")
         
         if not name then
             break
         else
-            name = mod.string.unlocalise("spell", name)
-            me.spellbook[spellid] = name
-            me.reversespellbook[name] = spellid
+            name = mod.string.reverselookup.spell[name]
+            if name then
+                me.spellbook[spellid] = name
+                me.reversespellbook[name] = spellid
+            end
         end
-
-        InitializeSpellSetting(name)
         
         spellid = spellid + 1
     end
@@ -106,7 +96,7 @@ me.scantalents = function()
 
     local function debug_talent()
         if rank > 0 then
-           mod.output.debug(name.."("..rank.."/"..maxrank..")")
+           mod.output.trace("info", me, "talents", name.."("..rank.."/"..maxrank..")")
         end
     end
     
@@ -175,17 +165,6 @@ me.scantalents = function()
     me.talents = true
 end
 
-local function InitializeSpellSetting(name)
-    local setting = mod.db.setting.spell
-    if setting[name] == nil then
-        setting[name] = true
-    end
-end
-
-local function CleanForgottenSpellSetting(name)
-    -- TODO
-end
-
 ------------------------------------------------------------------------------
 -- Action slots and Distance
 ------------------------------------------------------------------------------
@@ -199,40 +178,37 @@ me.scanaction = function()
         local text = GetActionText(slot)
         local texture = GetActionTexture(slot)
 
-        for distance, value in pairs(me.distancetable) do
-
-            if not me.actionslot[distance] then
-                for _, spell_texture in ipairs(value) do
-                    if string.find(texture, spell_texture) and text == nil then
-                        me.actionslot[distance] = slot
-                        distance_found = distance_found + 1
-                        break
+        if texture then 
+            for distance, value in pairs(mod.db.distancetable) do
+                if not me.actionslot[distance] then
+                    for _, spell_texture in pairs(value) do
+                        if string.find(texture, spell_texture) and text == nil then
+                            me.actionslot[distance] = slot
+                            break
+                        end
                     end
                 end
             end
         end
-
+        
         slot = slot + 1
     end
 
     -- check if all required distance are found
-    for distance, _ in pair(me.distancetable) do
+    for distance, _ in pairs(mod.db.distancetable) do
         if not me.actionslot[distance] then
-            mod.output.print("Any skill at distance" .. distance .. "is not found in action bar.")
+            mod.output.print("Any skill at distance [" .. distance .. "] is not found in action bar.")
             return false
         end
     end
 
-    mod.output.debug("All distance check spells are found.")
+    -- mod.output.trace("info", me, "action", "All distance check spells are found.")
     return true
 end
 
 me.distance = function()
 
-    if not UnitCanAttack("player", "target") then
-        return 999
-
-    elseif me.actionslot[5] and IsActionInRange(me.actionslot[5] == 1) then
+    if me.actionslot[5] and IsActionInRange(me.actionslot[5]) == 1 then
         return 5
     
     elseif me.actionslot[10] and IsActionInRange(me.actionslot[10]) == 1 then
@@ -275,7 +251,7 @@ me.dansable = function()
     ) then
         return true
     else
-        return falses
+        return false
     end
 end
 
@@ -437,7 +413,7 @@ me.buffed = function(buffname, unit)
     for slot = 1, 32 do
 
         tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-        tooltip:SetUnitDebuff(unit, i)
+        tooltip:SetUnitDebuff(unit, slot)
         local text = headline:GetText()
         tooltip:Hide()
 

@@ -27,7 +27,7 @@ end
 -- These are default printing options. For a release version, error only. For a debug version, maybe warnings too.
 me.default = 
 {
-	info = false,
+	info = true,
 	warning = true,
 	error = true,
 }
@@ -299,13 +299,6 @@ me.print = function(message, chatframeindex)
     -- write
     chatframe:AddMessage(message)
 
-end
-
-me.debug = function(message, chatframeindex)
-
-    if AegisDB["debug"] then
-        me.print(message,chatframeindex)
-    end
 end
 
 --[[

@@ -11,13 +11,6 @@ me.runaways = {}
 ------------------------------------------------------------------------------
 -- Intialize setting db and load saved settings.
 ------------------------------------------------------------------------------
-me.myevents = {"ADDON_LOADED"}
-
-me.onevent = function ()
-    Aegis_Setup()
-end
-
-
 -- Load settings from Savedvariables or initialize the settings table if it does not exist.
 local function Aegis_Setup()
 
@@ -50,6 +43,15 @@ local function Aegis_Setup()
     end
 
 end
+
+me.myevents = {"ADDON_LOADED"}
+
+me.onevent = function ()
+    Aegis_Setup()
+end
+
+
+
 
 --[[
 Default settings
@@ -136,32 +138,32 @@ me.spell = {
     {
         cost = 10,
         gcd = true,
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
     },
     ["battle_stance"] = {gcd = true},
     ["berserker_rage"] =
     {
         cost = 0,
         gcd = true,
-        stance = {["3"] = true},
+        stance = {[3] = true},
         dance = 3,
     },
     ["berserker_stance"] = {gcd = true},
     ["blood_rage"] = {
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
     },
     ["blood_thirst"] = 
     {
         cost = 30,
         distance = {min = 0, max = 5},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
     },
     ["challenging_shout"] = 
     {
         cost = 5,
         distance = {min = 0, max = 10},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
     },
     ["charge"] = 
@@ -170,7 +172,7 @@ me.spell = {
         combat = false,
         distance = {min = 8, max = 25},
         gcd = true,
-        stance = {["1"] = true},
+        stance = {[1] = true},
         dance = 1,
     },
     ["cleave"] = 
@@ -178,21 +180,21 @@ me.spell = {
         cost = 20,
         distance = {min = 0, max = 5},
         nextattack = true,
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         weapon = true,
     },
     ["concussion_blow"] = 
     {
         cost = 15,
         distance = {min = 0, max = 5},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
         weapon = true,
     },
     ["death_wish"] =
     {
         cost = 10,
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
     },
     ["defensive_stance"] = {gcd = true},
@@ -200,7 +202,7 @@ me.spell = {
     {
         cost = 10,
         distance = {min = 0, max = 10},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
     },
     ["disarm"] = 
@@ -208,7 +210,7 @@ me.spell = {
         cost = 20,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["2"] = true},
+        stance = {[2] = true},
         dance = 2,
     },
     ["execute"] = 
@@ -216,7 +218,7 @@ me.spell = {
         cost = 15,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true, ["3"] = true},
+        stance = {[1] = true, [3] = true},
         dance = 3,
         weapon = true,
     },
@@ -225,7 +227,7 @@ me.spell = {
         cost = 10,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true, ["3"] = true},
+        stance = {[1] = true, [3] = true},
         dance = 1,
         weapon = true,
     },
@@ -235,7 +237,7 @@ me.spell = {
         distance = {min = 0, max = 5},
         gcd = false,
         nextattack = true,
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         weapon = true,
     },
     ["intercept"] = 
@@ -243,24 +245,24 @@ me.spell = {
         cost = 10,
         distance = {min = 8, max = 25},
         gcd = true,
-        stance = {["3"] = true},
+        stance = {[3] = true},
     },
     ["intimidating_shout"] =
     {
         cost = 25,
         distance = {min = 0, max = 10},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
     },
     ["last_stand"] = {
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
     },
     ["mocking_blow"] = 
     {
         cost = 10,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true},
+        stance = {[1] = true},
         dance = 1,
         weapon = true,
     },
@@ -268,7 +270,7 @@ me.spell = {
     {
         cost = 30,
         distance = {min = 0, max = 5},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
         weapon = true,
     },
@@ -277,7 +279,7 @@ me.spell = {
         cost = 5,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true},
+        stance = {[1] = true},
         dance = 1,
         weapon = true,
     },
@@ -286,18 +288,18 @@ me.spell = {
         cost = 10,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["3"] = true},
+        stance = {[3] = true},
         dance = 3,
     },
     ["recklessness"] = {
-        stance = {["3"] = true},
+        stance = {[3] = true},
     },
     ["rend"] =
     {
         cost = 10,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true, ["2"] = true},
+        stance = {[1] = true, [2] = true},
         dance = 1,
         weapon = true,
     },
@@ -306,7 +308,7 @@ me.spell = {
         cost = 5,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["2"] = true},
+        stance = {[2] = true},
         dance = 2,
         weapon = true,
     },
@@ -315,14 +317,14 @@ me.spell = {
         cost = 10,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true, ["2"] = true},
+        stance = {[1] = true, [2] = true},
         dance = 1,
         shield = true,
     },
     ["shield_block"] =
     {
         cost = 10,
-        stance = {["2"] = true},
+        stance = {[2] = true},
         dance = 2,
         shield = true,
     },
@@ -330,14 +332,14 @@ me.spell = {
     {
         cost = 20,
         distance = {min = 0, max = 5},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
         shield = true,
     },
     ["shield_wall"] = 
     {
         gcd = true,
-        stance = {["2"] = true},
+        stance = {[2] = true},
         dance = 2,
         shield = true,
     },
@@ -345,18 +347,18 @@ me.spell = {
     {
         cost = 15,
         distance = {min = 0, max = 5},
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
         weapon = true,
     },
     ["sweeping_strikes"] = {
-        stance = {["1"] = true, ["2"] = true, ["3"] = true},
+        stance = {[1] = true, [2] = true, [3] = true},
     },
     ["taunt"] = 
     {
         cost = 0,
         distance = {min = 0, max = 5},
-        stance = {["2"] = true},
+        stance = {[2] = true},
         dance = 2,
     },
     ["thunder_clap"] =
@@ -364,7 +366,7 @@ me.spell = {
         cost = 20,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["1"] = true, ["3"] = true},
+        stance = {[1] = true, [3] = true},
         dance = 1,
         weapon = true,
     },
@@ -373,7 +375,7 @@ me.spell = {
         cost = 25,
         distance = {min = 0, max = 5},
         gcd = true,
-        stance = {["3"] = true},
+        stance = {[3] = true},
         dance = 3,
         weapon = true,
     },
