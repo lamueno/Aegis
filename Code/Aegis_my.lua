@@ -5,6 +5,9 @@ local mod = aegis
 local me = {}
 mod.my = me
 
+------------------------------------------------------------------------------
+-- Special Methods from Core.lua
+------------------------------------------------------------------------------
 me.myevents = {
     "CHAT_MSG_COMBAT_SELF_MISSES",  -- 你未命中一个生物时触发
     "CHAT_MSG_SPELL_SELF_DAMAGE",  -- 你施放一个法术伤害时触发
@@ -31,168 +34,420 @@ me.myevents = {
 
 me.onload = function()
 
+    me.scanspellbook()
+    me.scantalents()
     me.scanaction()
 
 end
 
-me.onevent = function()
+me.onupdate = function ()
+
+    me.statsupdate()
+
 end
 
 
+me.onevent = function()
+end
+
+-----------------------------------------
+--      Basic Character Stats          --
+-----------------------------------------
+-- mod.my.class is the unlocalised lower case representation. e.g. "warrior", "rogue", no matter what locale you are in.
+_, me.class = UnitClass("player")
+me.class = string.lower(me.class)
+_, me.race = UnitRace("player")
+me.race = string.lower(me.race)
+me.name = UnitName("player")
+
+me.statsupdate = function()
+
+    me.health = UnitHealth("player")
+    me.healthmax = UnitHealthMax("player")
+    me.rage = UnitMana("player")
+    me.incombat = UnitAffectingCombat("player")
+
+end
+    
+
+-- mod.my.armor is the effective armor armor after buffs
+_, me.armor = UnitArmor("player")
+
+
+------------------------------------------------------------------------------
+-- Spellbook and Talents
+------------------------------------------------------------------------------
+me.spellbook = {}
+me.reversespellbook = {}
+me.scanspellbook = function ()
+    
+    local spellid = 1
+    while true do
+        
+        local name = GetSpellName(spellid, BOOKTYPE_SPELL)
+        
+        if not name then
+            break
+        else
+            name = mod.string.unlocalise("spell", name)
+            me.spellbook[spellid] = name
+            me.reversespellbook[name] = spellid
+        end
+
+        InitializeSpellSetting(name)
+        
+        spellid = spellid + 1
+    end
+end
+
+me.scantalents = function()
+
+    local name, rank, maxrank
+
+    local function debug_talent()
+        if rank > 0 then
+           mod.output.debug(name.."("..rank.."/"..maxrank..")")
+        end
+    end
+    
+    -- Calculate the cost of Heroic Strike
+    name, _, _, _, rank, maxrank = GetTalentInfo(1, 1)
+    if rank > 0 then
+        mod.db.spell["heroic_strike"].cost = 15 - rank
+        debug_talent()
+    end
+    
+	-- Calculate the rage retainment of Tactical Mastery
+    name, _, _, _, rank, maxrank = GetTalentInfo(1, 5)
+    me.tactical_mastery = rank * 5
+    debug_talent()
+
+    -- Calculate the cost of Thunderclap
+    name, _, _, _, rank, maxrank = GetTalentInfo(1, 6)
+    if rank > 0 then
+        mod.db.spell["heroic_strike"].cost = 20 -  math.pow(2, rank-1)
+        debug_talent()
+    end
+
+    -- Check for Piercing Howl
+	name, _, _, _, rank, maxrank = GetTalentInfo(2, 6)
+    if rank > 0 then
+        mod.db.settings["piercing_howl"] = true
+        debug_talent()
+	else
+		mod.db.settings["piercing_howl"] = nil
+    end
+    
+    -- Check for Last Stand
+	name, _, _, _, rank, maxrank = GetTalentInfo(3, 6)
+    if rank > 0 then
+        mod.db.settings["last_stand"] = true
+        debug_talent()
+	else
+		mod.db.settings["last_stand"] = nil
+    end
+
+	-- Calculate the cost of Sunder Armor
+    name, _, _, _, rank, maxrank = GetTalentInfo(3, 10)
+    if rank > 0 then
+        mod.db.spell["sunder_armor"].cost = 15 - rank
+        debug_talent()
+    end
+    
+    -- Check for Concussion Blow
+	name, _, _, _, rank, maxrank = GetTalentInfo(3, 14)
+    if rank > 0 then
+        mod.db.settings["concussion_blow"] = true
+        debug_talent()
+	else
+		mod.db.settings["concussion_blow"] = nil
+    end
+
+    -- Check for Shield Slam
+	name, _, _, _, rank, maxrank = GetTalentInfo(3, 17)
+    if rank > 0 then
+        mod.db.settings["shield_slam"] = true
+        debug_talent()
+	else
+		mod.db.settings["shield_slam"] = nil
+    end
+
+    me.talents = true
+end
+
+local function InitializeSpellSetting(name)
+    local setting = mod.db.setting.spell
+    if setting[name] == nil then
+        setting[name] = true
+    end
+end
+
+local function CleanForgottenSpellSetting(name)
+    -- TODO
+end
+
+------------------------------------------------------------------------------
+-- Action slots and Distance
+------------------------------------------------------------------------------
 me.actionslot = {}
 
 me.scanaction = function()
+    
     local slot = 1
     while slot <= 120 do
+
         local text = GetActionText(slot)
         local texture = GetActionTexture(slot)
-        for distance, value in ipairs(me.distancetable) do
+
+        for distance, value in pairs(me.distancetable) do
+
             if not me.actionslot[distance] then
-                for _, spell_texture in value do
-                    if string.find(texture, spell_texture) and (not text) then
+                for _, spell_texture in ipairs(value) do
+                    if string.find(texture, spell_texture) and text == nil then
                         me.actionslot[distance] = slot
+                        distance_found = distance_found + 1
+                        break
                     end
                 end
             end
         end
+
+        slot = slot + 1
     end
 
     -- check if all required distance are found
-    for distance, _ in ipair(me.distancetable) do
+    for distance, _ in pair(me.distancetable) do
         if not me.actionslot[distance] then
-            mod.output.print("Any skill at distance" .. distnce .. "is not found in action bar.")
+            mod.output.print("Any skill at distance" .. distance .. "is not found in action bar.")
             return false
         end
     end
 
+    mod.output.debug("All distance check spells are found.")
     return true
 end
 
-
 me.distance = function()
-    
-    local max, min
 
     if not UnitCanAttack("player", "target") then
-        min = 999
-        max = 999
+        return 999
 
     elseif me.actionslot[5] and IsActionInRange(me.actionslot[5] == 1) then
-        max = 5
-        min = 0
+        return 5
     
     elseif me.actionslot[10] and IsActionInRange(me.actionslot[10]) == 1 then
         
         if me.actionslot[8] and IsActionInRange(me.actionslot[8]) == 0 then
-            max = 7.9
-            min = 5.1
+            return 7
         end
 
-        max = 10
-        min = 8
+        return 10
     
     elseif me.actionslot[25] and IsActionInRange(me.actionslot[25]) == 1 then
-        max = 25
-        min = 10.1
+        return 25
     
     elseif me.actionslot[30] and IsActionInRange(me.actionslot[30]) == 1 then
-        max = 30
-        min = 25.1 
+        return 30 
     end
 
-    return max, min
+    return 999
 end
 
-me.spell = mod.data.spell
 
-me.talents = function()
+------------------------------------------------------------------------------
+-- Stance and Dance
+------------------------------------------------------------------------------
+me.activestance = function()
+    for i = 1, 3 do
+		local _, _, active = GetShapeshiftFormInfo(i)
+		if active then
+			return i
+		end
+	end
+end
 
-    local rank
-    
-    --Calculate the cost of Heroic Strike based on talents
-    _, _, _, _, rank = GetTalentInfo(1, 1)
-    if rank > 0 then
-        me.spell["heroic_strike"].cost = 15 - tonumber(rank)
-        mod.out.debug(mod.string.get("talent", "imp_heroic_strike"))
-    end
-    
-	--Calculate the rage retainment of Tactical Mastery
-    _, _, _, _, rank = GetTalentInfo(1, 5)
-    me.tactical_mastery = tonumber(rank) * 5
-    mod.out.debug(mod.string.get("talent", "tactical_mastery"))
+me.dansable = function()
+    local settings = mod.db.settings.dance
 
-    --Check for Piercing Howl
-	_, _, _, _, rank = GetTalentInfo(2, 6)
-    if rank > 0 then
-        me.spell["piercing_howl"].enabled = true
-        mod.out.debug(mod.string.get("talent", "piercing_howl"))
-	else
-		me.spell["piercing_howl"].enabled = false
-    end
-    
-	--Calculate the cost of Sunder Armor based on talents
-    _, _, _, _, rank = GetTalentInfo(3, 10)
-    if rank > 0 then
-        me.spell["sunder_armor"].cost = 15 - tonumber(rank)
-        mod.out.debug(mod.string.get("talent", "imp_sunder_armor"))
-    end
-    
-    --Check for Death Wish
-	_, _, _, _, rank = GetTalentInfo(2, 13)
-    if rank > 0 then
-        me.spell["death_wish"].enabled = true
-        mod.out.debug(mod.string.get("talent", "death_wish"))
+    if (
+        me.rage <= me.tactical_mastery + settings["rage_waste_allowed"]
+        and settings["primary_stance"] > 0
+    ) then
+        return true
     else
-        me.spell["death_wish"].enabled = false
-	end
-    
-    --[[
-    -- Check for Improved Berserker Rage
-    _, _, _, _, rank = GetTalentInfo(2, 15)
-	if currRank > 0 then
-		Debug("强化狂暴之怒")
-		FuryBerserkerRage = true
-	else
-		FuryBerserkerRage = false
-	end
-	--Check for Flurry
-	_, _, _, _, rank = GetTalentInfo(2, 16)
-	if currRank > 0 then
-		Debug("乱舞")
-		FuryFlurry = true
-	else
-		FuryFlurry = false
-	end
+        return falses
+    end
+end
 
-	--Check for Bloodthirst
-	_, _, _, _, rank = GetTalentInfo(2, 17)
-	if currRank > 0 then
-		Debug("嗜血")
-		FuryBloodthirst =  true
-	else
-		FuryBloodthirst = false
+
+------------------------------------------------------------------------------
+-- Equipment
+------------------------------------------------------------------------------
+me.weaponed = function()
+    -- Detect if a suitable weapon (not a skinning knife/mining pick and not broken) is present
+	local item = GetInventoryItemLink("player", 16)
+	if item then
+		local _, _, itemCode = strfind(item, "(%d+):")
+		local itemName, itemLink, _, _, itemType = GetItemInfo(itemCode)
+        
+        if not (
+            itemLink == "item:7005:0:0:0" 
+            or itemLink == "item:2901:0:0:0" 
+            or GetInventoryItemBroken("player", 16)
+        ) then
+			return true
+		end
 	end
-    ]]
- 
-	--Check for Shield Slam
-	_, _, _, _, rank = GetTalentInfo(3, 17)
-    if rank > 0 then
-        me.spell["shield_slam"].enabled = true
-        mod.out.debug(mod.string.get("talent", "shield_slam"))
-	else
-		me.spell["shield_slam"].enabled = false
+	return false
+end
+
+me.shielded = function()
+    -- Detect if a shield is present
+	local item = GetInventoryItemLink("player", 17)
+    if item then
+		local _, _, itemCode = strfind(item, "(%d+):")
+		local _, _, _, _, _, itemType = GetItemInfo(itemCode)
+        
+        if (
+            itemType == mod.string.get("item_type", "shield") 
+            and not GetInventoryItemBroken("player", 17)
+        ) then
+			return true
+		end
 	end
-	if UnitRace("player") == RACE_ORC then
-		Debug("血性狂暴")
-		FuryRacialBloodFury = true
-	else
-		FuryRacialBloodFury = false
+	return false
+end
+
+me.ranged_type = function()
+    -- Detect if a ranged weapon is equipped and return type
+	local item = GetInventoryItemLink("player", 18)
+	if item then
+		local _, _, itemCode = strfind(item, "(%d+):")
+		local _, _, _, _, _, itemType = GetItemInfo(itemCode)
+		return itemType
 	end
-	if UnitRace("player") == RACE_TROLL then
-		Debug("狂暴")
-		FuryRacialBerserking = true
-	else
-		FuryRacialBerserking = false
+	return nil
+end
+
+me.trinket = function()
+    -- TODO
+end
+
+
+------------------------------------------------------------------------------
+-- Inventory and Item functions
+------------------------------------------------------------------------------
+local function FindItem(item)
+--[[
+    Copied from SuperMacro.
+
+    Find an item in your container bags or inventory. 
+    If found in inventory, returns slot, nil, texture, count.
+    If found in bags, returns bag, slot, texture, total count in all bags.
+    Also works with item links. Alt-click on item to insert item link into macro.
+    Ex. local bag,slot,texture,count = FindItem("Lesser Magic Essence");
+
+]]
+    if ( not item ) then return; end
+    
+    item = string.lower(ItemLinkToName(item))
+    
+    local link
+    
+    -- Look for equipments
+	for i = 1,23 do
+		link = GetInventoryItemLink("player",i)
+		if link then
+			if item == string.lower(ItemLinkToName(link)) then
+				return i, nil, GetInventoryItemTexture('player', i), GetInventoryItemCount('player', i)
+			end
+		end
+    end
+    
+    -- Look for bags
+	local count, bag, slot, texture
+    local totalcount = 0
+    
+    for i = 0, 4 do
+        for j = 1, GetContainerNumSlots(i) do
+            link = GetContainerItemLink(i, j)
+            if link then
+                if item == string.lower(ItemLinkToName(link)) then
+                    bag, slot = i, j
+					texture, count = GetContainerItemInfo(i, j)
+					totalcount = totalcount + count
+				end
+            end
+		end
 	end
-	FuryTalents = true
+	return bag, slot, texture, totalcount;
+end
+
+local function ItemLinkToName(link)
+    -- Copied from SuperMarco.
+	if link then
+   	    return gsub(link,"^.*%[(.*)%].*$","%1");
+	end
+end
+
+local function UseItem(item)
+	local bag,slot = FindItem(item)
+	if ( not bag ) then return; end
+	if ( slot ) then
+		UseContainerItem(bag,slot) -- use, equip item in bag
+		return bag, slot
+	else
+		UseInventoryItem(bag) -- use equipped item
+		return bag
+	end
+end
+
+
+------------------------------------------------------------------------------
+-- Buff and Debuff
+------------------------------------------------------------------------------
+--[[
+    `mod.my.buffed(buffname [, unit])` takes a localized buffname shown in the game client.
+]]
+me.buffed = function(buffname, unit)
+    
+    if not unit then unit = "player" end
+
+    local tooltip = Aegis_Tooltip
+    local headline = getglobal(tooltip:GetName().."TextLeft1")
+    local slot
+
+    -- Buff 
+    for slot = 1, 32 do
+
+        tooltip:SetOwner(UIParent, "ANCHOR_NONE")
+        tooltip:SetUnitBuff(unit, slot)
+        local text = headline:GetText()
+        tooltip:Hide()
+
+        if text and strfind(text, buffname) then
+            local _, count = UnitBuff(unit, slot)
+            return "buff", slot, text, count
+        elseif not text then
+            break
+        end
+    end 
+
+    -- Debuff
+    for slot = 1, 32 do
+
+        tooltip:SetOwner(UIParent, "ANCHOR_NONE")
+        tooltip:SetUnitDebuff(unit, i)
+        local text = headline:GetText()
+        tooltip:Hide()
+
+        if text and strfind(text, buffname) then
+            local _, count, type = UnitDebuff(unit, slot)
+            return "debuff", slot, text, count, type
+        elseif not text then
+            break
+        end
+    end 
+
+    tooltip:Hide()
 end

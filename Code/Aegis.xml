@@ -7,10 +7,19 @@
 			<OnLoad>
 				aegis.onload()
 			</OnLoad>
-
+			<OnUpdate>
+				aegis.onupdate()
+			</OnUpdate>
 			<OnEvent>
 				aegis.onevent()
 			</OnEvent>
 		</Scripts>
 	</Frame>
+	<GameTooltip name="Aegis_Tooltip" frameStrata="TOOLTIP" hidden="true" parent="UIParent" inherits="GameTooltipTemplate">
+		<Scripts>
+			<OnLoad>
+		this:SetOwner(WorldFrame, "ANCHOR_NONE");
+			</OnLoad>
+		</Scripts>
+	</GameTooltip>
 </Ui>

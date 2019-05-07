@@ -60,6 +60,26 @@ me.onload = function()
     -- todo
 end
 
+-- onupdate
+me.onupdate = function()
+
+	-- only call when everything has been loaded
+	if me.isloaded ~= true then
+		return
+	end
+	
+	-- don't call if the entire addon is disabled
+	if me.isenabled == false then
+		return
+	end
+	
+	for key, subtable in me do
+		if type(subtable) == "table" and subtable.onupdate and subtable.isenabled ~= "false" then
+			-- me.diag.logmethodcall(key, "onupdate")
+		end
+	end
+end
+
 -- onevent
 me.onevent = function()
 
