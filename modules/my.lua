@@ -11,9 +11,11 @@ mod.my = me
 me.myevents = {
     "ACTIONBAR_SLOT_CHANGED",
     "CHARACTER_POINTS_CHANGED",
+
+    "UNIT_RAGE",
 }
 
-me.onload = function()
+me.onloadcomplete = function()
 
     me.scanspellbook()
     me.scantalents()
@@ -50,18 +52,17 @@ me.race = string.lower(me.race)
 me.name = UnitName("player")
 
 me.statsupdate = function()
-
+    
+    me.incombat = UnitAffectingCombat("player")
     me.health = UnitHealth("player")
     me.healthmax = UnitHealthMax("player")
     me.rage = UnitMana("player")
-    me.incombat = UnitAffectingCombat("player")
+
+    -- mod.my.armor is the effective armor armor after buffs
+    _, me.armor = UnitArmor("player")
 
 end
     
-
--- mod.my.armor is the effective armor armor after buffs
-_, me.armor = UnitArmor("player")
-
 
 ------------------------------------------------------------------------------
 -- Spellbook and Talents
@@ -427,3 +428,8 @@ me.buffed = function(buffname, unit)
 
     tooltip:Hide()
 end
+
+
+------------------------------------------------------------------------------
+-- Rage/Health Tracking and Prediction
+------------------------------------------------------------------------------

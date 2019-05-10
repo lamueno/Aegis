@@ -169,16 +169,18 @@ me.trace = function(messagetype, module, sectionname, message)
 end
 
 me.tracespellcast = function(spellname, dance)
-    local messagetype = "info"
-    local module = mod.combat
-    local sectionname = "cast"
+    me.printargs.messagetype = "info"
+    me.printargs.modulename = "combat"
+    me.printargs.sectionname = "cast"
     local message = string.format("[%s] ", mod.my.rage)
 
     if dance then
         message = message .. string.format("%s ==> %s", mod.string.get("spell", dance), mod.string.get("spell", spellname))
     else
         message = message .. mod.string.get("spell", spellname)
-    end
+	end
+	
+	me.printtrace(message)
 end
 
 --[[ 

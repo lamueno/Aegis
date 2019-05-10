@@ -27,12 +27,6 @@ me.onload = function()
     --  find frame
     me.frame = AegisFrame
 
-    -- load string module before others
-    if type(me.string) == "table" and me.string.isenabled ~= "false" then
-        me.string.onload()
-        me.string.isloaded = true
-    end
-
     --  initialize all submodules
     for key, subtable in me do
         if type(subtable) == "table" and subtable.onload and subtable.isenabled ~= "false" and subtable.isloaded ~= true then
@@ -98,7 +92,8 @@ me.onevent = function()
 		-- 2) The subtable is not disabled
 		-- 3) The subtable has registered the event
 		if type(subtable) == "table" and subtable.onevent and subtable.isenabled ~= "false" and me.events[key][event] then
-			me.diag.logmethodcall(key, "onevent")
+            me.diag.logmethodcall(key, "onevent")
+            -- subtable.onevent()
 		end
     end
 

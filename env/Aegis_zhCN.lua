@@ -29,7 +29,7 @@ aegis.string.data["zhCN"] = {
         ["berserker_rage"]		= "狂暴之怒",
         ["berserker_stance"]	= "狂暴姿态",
         ["blood"]				= "血性狂暴",
-        ["bloodrage"]			= "血性狂暴",
+        ["blood_rage"]			= "血性狂暴",
         ["bloodthirst"]		    = "嗜血",
         ["challenging_shout"]	= "挑战怒吼",
         ["charge"]				= "冲锋",
@@ -145,9 +145,9 @@ aegis.string.data["zhCN"] = {
         ["runaway"] = {"%s充满恐惧地想要转身逃跑！"},
         ["revenge"] = {
             ["enable"] = {
-                "你闪躲开了",
-                "你招架住了",
-                "你格挡开了",
+                "你闪躲开了。",
+                "你招架住了。",
+                "你格挡开了。",
             },
             ["disable"] = {
                 "你的复仇对(.+)造成(%d+)的致命一击伤害。",

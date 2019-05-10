@@ -52,17 +52,18 @@ me.myevents = {
 
     "CHAT_MSG_SPELL_FAILED_LOCALPLAYER",
 }
-me.event = function()
+me.onevent = function()
 
+    
     local sequence = {
-        AutoAttack,
-        TriggerDebuffed,
-        TriggerInterrupt,
-        TriggerOverPower,
-        TriggerRevenge,
+        me.trigger.autoattack,
+        me.trigger.debuffed,
+        me.trigger.interrupt,
+        me.trigger.overpower,
+        me.trigger.revenge,
     }
 
-    for _, trigger in pairs(sequence) do
+    for _, trigger in sequence do
         if trigger() then break end
     end
 end
@@ -70,7 +71,9 @@ end
 ------------------------------------------------------------------------------
 -- Event triggers
 ------------------------------------------------------------------------------
-local function TriggerOverPower()
+me.trigger = {}
+
+me.trigger.overpower = function()
     if (event == "CHAT_MSG_COMBAT_SELF_MISSES"
 	    or event == "CHAT_MSG_SPELL_SELF_DAMAGE"
         or event == "CHAT_MSG_SPELL_DAMAGESHIELDS_ON_SELF"
@@ -91,7 +94,7 @@ local function TriggerOverPower()
     end
 end
 
-local function TriggerInterrupt()
+me.trigger.interrupt = function()
     if (event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_DAMAGE"
 	    or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF"
 	    or event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF"
@@ -122,10 +125,11 @@ local function TriggerInterrupt()
     end
 end
 
-local function TriggerRevenge()
+me.trigger.revenge = function()
     if event == "CHAT_MSG_COMBAT_CREATURE_VS_SELF_MISSES" then
+        
         for _, value in mod.string.get("combat", "revenge", "enable") do
-            if arg1 == value then
+            if string.find(arg1, value) then
                 me.state.revenge = {flag="enabled", til=GetTime() + 4}
                 return true
             end
@@ -140,7 +144,7 @@ local function TriggerRevenge()
     end
 end
 
-local function TriggerDebuffed()
+me.trigger.debuffed = function()
     if event == "CHAT_MSG_SPELL_PERIODIC_SELF_DAMAGE" then
         
         for _, value in mod.string.get("combat", "disarmed", "enable") do
@@ -189,11 +193,13 @@ local function TriggerDebuffed()
     end
 end
 
-local function AutoAttack()
+me.trigger.autoattack = function()
     if event == "START_AUTOREPEAT_SPELL" then
         me.state.autoattack = true
+        return true
     elseif event == "STOP_AUTOREPEAT_SPELL" then
         me.state.autoattack = false
+        return true
     end
 end
 
@@ -204,7 +210,7 @@ end
 me.target = {}
 me.target.health = UnitHealth("target")
 me.target.healthmax = UnitHealthMax("target")
-me.target.healthpct = me.target.health / me.target.healthmax * 20
+me.target.healthpct = me.target.health / me.target.healthmax * 100
 
 
 ------------------------------------------------------------------------------
@@ -256,14 +262,14 @@ me.cast.standardcast = function(name)
     local meta = mod.db.spell[name]
 
     -- Spell can be cast in current stance
-    if meta.stance[mod.my.activestance] == true then
+    if meta.stance[mod.my.activestance()] == true then
         CastSpellByName(mod.string.get("spell", name))
         mod.output.tracespellcast(name)
         return true
 
     -- Dance to cast
     elseif me.state.dance.dancing ~= true and meta.dance ~= nil then
-        me.state.dance.old = mod.my.activestance
+        me.state.dance.old = mod.my.activestance()
         me.state.dance.dancing = true
         CastShapeshiftForm(meta.dance)
         mod.output.tracespellcast(name, mod.db.stance[meta.dance])
@@ -280,13 +286,12 @@ me.cast.stancedance = function()
     
     local state= me.state.dance
     local settings = mod.db.settings["dance"]
-    local primary = settings["primary"]
-    local spellname = mod.db.stance[primary]
+    local spellname = mod.db.stance[settings["primary_stance"]]
 
     -- Reset to primary stance
-    if primary ~= mod.my.activestance and not state.dancing then
+    if primary ~= mod.my.activestance() and not state.dancing then
         if mod.libspell.SpellCanCast(spellname) then
-            CastShapeshiftForm(primary)
+            CastShapeshiftForm(settings["primary_stance"])
             mod.output.tracespellcast(spellname)
             return true
         end
@@ -294,8 +299,9 @@ me.cast.stancedance = function()
 end
 
 me.cast.AutoAttack = function()
-    if mod.db.settings["spell_option"]["autoattack"] and mod.my.incombat then
+    if mod.db.settings["spell_option"]["autoattack"] and mod.my.incombat and not me.state.autoattack then
         AttackTarget()
+        me.state.autoattack = true
     end
 end
 
@@ -396,7 +402,7 @@ end
 me.cast.Revenge = function()
 
     local name = "revenge"
-
+    
     local state = me.state.revenge
     if state.flag == "enabled" then 
         if GetTime() > state.til then
@@ -409,7 +415,7 @@ me.cast.Revenge = function()
         return
     end
 
-    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 then
         if me.cast.standardcast(name) then
             return true
         end
@@ -515,14 +521,14 @@ end
 me.cast.tank = function()
 	local action_sequence = {
         me.cast.AutoAttack,
-		-- me.cast.stancedance,
+		me.cast.stancedance,
 		me.cast.Revenge,
-		me.cast.ShieldSlam,
+		-- me.cast.ShieldSlam,
 		-- me.cast.ShieldBlock,
-		me.cast.SunderArmor,
-		me.cast.HeroicStrike,
-		me.cast.BattleShout,
-		me.cast.BloodRage,
+		-- me.cast.SunderArmor,
+		-- me.cast.HeroicStrike,
+		-- me.cast.BattleShout,
+		-- me.cast.BloodRage,
 	}
 	
 	if me.statuscheck() then
