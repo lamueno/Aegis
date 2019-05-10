@@ -285,13 +285,13 @@ me.cast.stancedance = function()
     if not mod.my.dansable then return end
     
     local state= me.state.dance
-    local settings = mod.db.settings["dance"]
-    local spellname = mod.db.stance[settings["primary_stance"]]
+    local primary = mod.db.settings.dance.primary_stance
+    local spellname = mod.db.stance[primary]
 
     -- Reset to primary stance
     if primary ~= mod.my.activestance() and not state.dancing then
         if mod.libspell.SpellCanCast(spellname) then
-            CastShapeshiftForm(settings["primary_stance"])
+            CastShapeshiftForm(primary)
             mod.output.tracespellcast(spellname)
             return true
         end
@@ -523,12 +523,12 @@ me.cast.tank = function()
         me.cast.AutoAttack,
 		me.cast.stancedance,
 		me.cast.Revenge,
-		-- me.cast.ShieldSlam,
-		-- me.cast.ShieldBlock,
-		-- me.cast.SunderArmor,
-		-- me.cast.HeroicStrike,
-		-- me.cast.BattleShout,
-		-- me.cast.BloodRage,
+		me.cast.ShieldSlam,
+		me.cast.ShieldBlock,
+		me.cast.SunderArmor,
+		me.cast.HeroicStrike,
+		me.cast.BattleShout,
+		me.cast.BloodRage,
 	}
 	
 	if me.statuscheck() then

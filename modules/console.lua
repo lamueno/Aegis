@@ -284,9 +284,30 @@ me.defineclui = function()
                 command = "pull",
                 description = "Taunt and Mocking Blow in one",
                 output = mod.combat.cast.pull
-            },
+			},
+			{  -- set primary stance
+			command = "stance",
+			description = "Change primary stance. 1=Battle;2=Defensive;3=Berserker",
+			output = me.setprimarystance
+			},
         }
     }
 
+
+end
+
+
+
+me.setprimarystance = function(firstvalue, allvalues)
+
+	local stance = tonumber(firstvalue)
+
+	for _, v in {1,2,3} do
+		if stance == v then
+			mod.db.settings.dance.primary_stance = stance
+			mod.output.trace("info", me, "setstance", "Primary stance set to "..stance)
+			return
+		end
+	end
 
 end

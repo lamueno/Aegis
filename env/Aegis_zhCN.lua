@@ -28,7 +28,6 @@ aegis.string.data["zhCN"] = {
         ["battle_stance"]		= "战斗姿态",
         ["berserker_rage"]		= "狂暴之怒",
         ["berserker_stance"]	= "狂暴姿态",
-        ["blood"]				= "血性狂暴",
         ["blood_rage"]			= "血性狂暴",
         ["bloodthirst"]		    = "嗜血",
         ["challenging_shout"]	= "挑战怒吼",
