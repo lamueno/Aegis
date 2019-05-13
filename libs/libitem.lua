@@ -70,3 +70,18 @@ me.use = function(item)
         return bag
     end
 end
+
+me.ready = function(item)
+
+    if not me.find(item) then
+        return false
+    end
+
+    local _, duration = GetItemCooldown(item)
+    if duration == 0 then
+        return true
+    else
+        return false
+    end
+
+end

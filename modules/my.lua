@@ -59,8 +59,11 @@ me.name = UnitName("player")
 me.statsupdate = function()
     
     me.incombat = UnitAffectingCombat("player")
+    
     me.health = UnitHealth("player")
     me.healthmax = UnitHealthMax("player")
+    me.healthpct = me.health / me.healthmax * 100
+
     me.rage.rage = UnitMana("player")
 
     -- mod.my.armor is the effective armor armor after buffs

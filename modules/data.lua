@@ -181,7 +181,7 @@ me.spell = {
         distance = {min = 0, max = 5},
         nextattack = true,
         stance = {[1] = true, [2] = true, [3] = true},
-        weapon = true,
+        weaponed = true,
     },
     ["concussion_blow"] = 
     {
@@ -189,7 +189,7 @@ me.spell = {
         distance = {min = 0, max = 5},
         stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
-        weapon = true,
+        weaponed = true,
     },
     ["death_wish"] =
     {
@@ -220,7 +220,7 @@ me.spell = {
         gcd = true,
         stance = {[1] = true, [3] = true},
         dance = 3,
-        weapon = true,
+        weaponed = true,
     },
     ["hamstring"] = 
     {
@@ -229,7 +229,7 @@ me.spell = {
         gcd = true,
         stance = {[1] = true, [3] = true},
         dance = 1,
-        weapon = true,
+        weaponed = true,
     },
     ["heroic_strike"] =
     {
@@ -238,7 +238,7 @@ me.spell = {
         gcd = false,
         nextattack = true,
         stance = {[1] = true, [2] = true, [3] = true},
-        weapon = true,
+        weaponed = true,
     },
     ["intercept"] = 
     {
@@ -264,7 +264,7 @@ me.spell = {
         gcd = true,
         stance = {[1] = true},
         dance = 1,
-        weapon = true,
+        weaponed = true,
     },
     ["mortal_strike"] = 
     {
@@ -272,7 +272,7 @@ me.spell = {
         distance = {min = 0, max = 5},
         stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
-        weapon = true,
+        weaponed = true,
     },
     ["overpower"] =
     {
@@ -281,7 +281,7 @@ me.spell = {
         gcd = true,
         stance = {[1] = true},
         dance = 1,
-        weapon = true,
+        weaponed = true,
     },
     ["pummel"] = 
     {
@@ -301,7 +301,7 @@ me.spell = {
         gcd = true,
         stance = {[1] = true, [2] = true},
         dance = 1,
-        weapon = true,
+        weaponed = true,
     },
     ["revenge"] =
     {
@@ -310,7 +310,7 @@ me.spell = {
         gcd = true,
         stance = {[2] = true},
         dance = 2,
-        weapon = true,
+        weaponed = true,
     },
     ["shield_bash"] =
     {
@@ -319,14 +319,14 @@ me.spell = {
         gcd = true,
         stance = {[1] = true, [2] = true},
         dance = 1,
-        shield = true,
+        shielded = true,
     },
     ["shield_block"] =
     {
         cost = 10,
         stance = {[2] = true},
         dance = 2,
-        shield = true,
+        shielded = true,
     },
     ["shield_slam"] =
     {
@@ -334,14 +334,14 @@ me.spell = {
         distance = {min = 0, max = 5},
         stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
-        shield = true,
+        shielded = true,
     },
     ["shield_wall"] = 
     {
         gcd = true,
         stance = {[2] = true},
         dance = 2,
-        shield = true,
+        shielded = true,
     },
     ["sunder_armor"] = 
     {
@@ -349,7 +349,7 @@ me.spell = {
         distance = {min = 0, max = 5},
         stance = {[1] = true, [2] = true, [3] = true},
         gcd = true,
-        weapon = true,
+        weaponed = true,
     },
     ["sweeping_strikes"] = {
         stance = {[1] = true, [2] = true, [3] = true},
@@ -368,7 +368,7 @@ me.spell = {
         gcd = true,
         stance = {[1] = true, [3] = true},
         dance = 1,
-        weapon = true,
+        weaponed = true,
     },
     ["whirlwind"] = 
     {
@@ -377,7 +377,7 @@ me.spell = {
         gcd = true,
         stance = {[3] = true},
         dance = 3,
-        weapon = true,
+        weaponed = true,
     },
 }
 

@@ -418,7 +418,7 @@ me.cast.Revenge = function()
         if GetTime() > state.til then
             state.flag = "expired"
             state.til = nil
-            mod.output.trace("info", me, "cast", "Revenge has expired.")
+            -- mod.output.trace("info", me, "cast", "Revenge has expired.")
             return
         end
     else
@@ -489,12 +489,12 @@ me.cast.SunderArmor = function()
     
     local _, _, _, count = mod.target.buffed(mod.string.get("spell", name))
     if count then
-        if count == 5 and me.state.lastsunder + 25 > GetTime() then
+        if count > 2 or me.state.lastsunder + 25 > GetTime() then
             return
         end
     end
 
-    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 then
 
         if KLHTM_Sunder then
             KLHTM_Sunder()
@@ -512,7 +512,7 @@ me.cast.Taunt = function()
 
     local name = "taunt"
 
-    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) and UnitName("targettarget") ~= mod.my.name then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 and UnitName("targettarget") ~= mod.my.name then
         if me.cast.standardcast(name) then
             return true
         end
@@ -524,7 +524,7 @@ me.cast.ThunderClap = function()
 
     local name = "thunder_clap"
 
-    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 then
         if me.cast.standardcast(name) then
             return true
         end
@@ -532,12 +532,51 @@ me.cast.ThunderClap = function()
 
 end
 
+me.cast.DebuffTreat = function ()
+    if buffed("龙血之痛：青铜", "player") then
+		use("沙漏")
+	end
+
+
+end
+
+
+me.cast.LifeSaving = function()
+
+    local danger_health = 2000
+    local danger_healthpct = 20
+
+	if mod.my.health < danger_health or mod.my.healthpct < danger_healthpct then
+
+		local item = mod.string.get("item", "Major Healthstone")
+		if mod.libitem.ready(item) then
+			mod.libitem.use(item)
+			return true
+		end
+
+		local item = mod.string.get("item", "Major Healing Potion")
+		if mod.libitem.ready(item) then
+			mod.libitem.use(item)
+			return true
+		end
+
+		local spell = mod.string.get("spell", "last_stand")
+        if mod.libspell.SpellCanCast(spell) and mod.libspell.SpellReadyIn(spell) == 0 then
+            if me.cast.standardcast(spell) then
+                return true
+            end
+        end
+    end
+end
+
+
 me.cast.charge = function()
 
 end
 
 me.cast.tank = function()
 	local action_sequence = {
+        me.cast.LifeSaving,
         me.cast.AutoAttack,
 		me.cast.stancedance,
 		me.cast.Revenge,
