@@ -172,7 +172,7 @@ me.tracespellcast = function(spellname, dance)
     me.printargs.messagetype = "info"
     me.printargs.modulename = "combat"
     me.printargs.sectionname = "cast"
-    local message = string.format("[%s] ", mod.my.rage)
+    local message = string.format("[%s] ", mod.my.rage.rage)
 
     if dance then
         message = message .. string.format("%s ==> %s", mod.string.get("spell", dance), mod.string.get("spell", spellname))

@@ -15,6 +15,8 @@ me.state = {
     incapacitated = nil,
 
     lastsunder = 0,
+    conserved_rage = {},
+    conserved_rage_total = 0,
 }
 me.cast = {}
 me.use = {}
@@ -205,15 +207,6 @@ end
 
 
 ------------------------------------------------------------------------------
--- Target
-------------------------------------------------------------------------------
-me.target = {}
-me.target.health = UnitHealth("target")
-me.target.healthmax = UnitHealthMax("target")
-me.target.healthpct = me.target.health / me.target.healthmax * 100
-
-
-------------------------------------------------------------------------------
 -- Combat strategy
 ------------------------------------------------------------------------------
 me.statuscheck = function()
@@ -227,6 +220,22 @@ me.statuscheck = function()
         mod.output.trace("info", me, "spell", "Combat Status check failed.")
         return false
     end
+end
+
+me.converse_rage = function(name)
+
+    local spell_cost = mod.db.spell[name].cost
+    local spell_cd = mod.libspell.SpellReadyIn(name)
+    local rage_gps = mod.my.rage.gps_5
+
+    me.state.conserved_rage[name] = max(spell_cost * math.exp( -0.3 * spell_cd) - rage_gps, 0) or 0
+    
+    me.state.conserved_rage_total = 0
+    for _, value in me.state.conserved_rage do
+        me.state.conserved_rage_total = me.state.conserved_rage_total + value
+        -- mod.output.trace("info", me, "combat", string.format("留怒 %s: %.1f (cd: %.1f)", name, value, spell_cd))
+    end
+
 end
 
 
@@ -346,7 +355,7 @@ end
 me.cast.HeroicStrike = function()
 
     if (mod.libspell.SpellCanCast("heroic_strike") and mod.libspell.SpellReadyIn("heroic_strike") == 0
-        and mod.my.rage >= mod.db.settings["spell_option"]["nextattack_rage"]
+        and mod.my.rage.rage >= mod.db.settings["spell_option"]["nextattack_rage"]
     ) then
         if me.cast.standardcast("heroic_strike") then
             return true
@@ -450,18 +459,16 @@ me.cast.ShieldSlam = function ()
 
     local name = "shield_slam"
 
-    if mod.libspell.SpellCanCast(name) then
-        if mod.libspell.SpellReadyIn(name) == 0 then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 then
             CastSpellByName(mod.string.get("spell", name))
             mod.output.tracespellcast(name)
             return true
 
-        elseif mod.libspell.SpellReadyIn(name) <= 1.5 then
+    elseif mod.libspell.SpellCanCast(name, nil, 1.5) and mod.libspell.SpellReadyIn(name) <= 1.5 then
             mod.output.trace("info", me, "cast", mod.string.get("translation", "Shield Slam is almost ready, wait"))
             return false
         end
     end
-end
 
 me.cast.SunderArmor = function()
 
@@ -522,15 +529,17 @@ me.cast.tank = function()
 	local action_sequence = {
         me.cast.AutoAttack,
 		me.cast.stancedance,
-		me.cast.Revenge,
 		me.cast.ShieldSlam,
-		me.cast.ShieldBlock,
+		me.cast.Revenge,
+		-- me.cast.ShieldBlock,
 		me.cast.SunderArmor,
 		me.cast.HeroicStrike,
 		me.cast.BattleShout,
 		me.cast.BloodRage,
 	}
 	
+    me.converse_rage("shield_slam")
+
 	if me.statuscheck() then
 		for _, spell in pairs(action_sequence) do
 			if spell() then break end

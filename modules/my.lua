@@ -32,7 +32,10 @@ end
 
 me.onevent = function()
 
-    if event == "CHARACTER_POINTS_CHANGED" then
+    if event == "UNIT_RAGE" and arg1 == "player" then
+        me.prediction.rage_change_event()
+
+    elseif event == "CHARACTER_POINTS_CHANGED" then
         me.scantalents()
 
     elseif event == "ACTIONBAR_SLOT_CHANGED" then
@@ -44,6 +47,8 @@ end
 -----------------------------------------
 --      Basic Character Stats          --
 -----------------------------------------
+me.rage = {}
+
 -- mod.my.class is the unlocalised lower case representation. e.g. "warrior", "rogue", no matter what locale you are in.
 _, me.class = UnitClass("player")
 me.class = string.lower(me.class)
@@ -56,7 +61,7 @@ me.statsupdate = function()
     me.incombat = UnitAffectingCombat("player")
     me.health = UnitHealth("player")
     me.healthmax = UnitHealthMax("player")
-    me.rage = UnitMana("player")
+    me.rage.rage = UnitMana("player")
 
     -- mod.my.armor is the effective armor armor after buffs
     _, me.armor = UnitArmor("player")
@@ -316,124 +321,72 @@ end
 
 
 ------------------------------------------------------------------------------
--- Inventory and Item functions
+-- Rage Tracking and Prediction
 ------------------------------------------------------------------------------
-local function FindItem(item)
---[[
-    Copied from SuperMacro.
+me.prediction = {}
 
-    Find an item in your container bags or inventory. 
-    If found in inventory, returns slot, nil, texture, count.
-    If found in bags, returns bag, slot, texture, total count in all bags.
-    Also works with item links. Alt-click on item to insert item link into macro.
-    Ex. local bag,slot,texture,count = FindItem("Lesser Magic Essence");
+me.rage = {
+    old = 0,
+    last_gain = 0,
+    gps_15 = 0,  -- short for gain per second by 15 seconds rolling 
+    gps_5 = 0,  -- short for gain per second by 5 seconds rolling
+    max_gain_15 = 0,
+    max_gain_5 = 0
 
-]]
-    if ( not item ) then return; end
+}
     
-    item = string.lower(ItemLinkToName(item))
+me.prediction.rolling_average = function(OldAverage, deltaF, deltaT, interval, weight)
     
-    local link
+    -- set default parameter if not given
+    local interval = interval or 15
+    local weight = weight or 2
     
-    -- Look for equipments
-	for i = 1,23 do
-		link = GetInventoryItemLink("player",i)
-		if link then
-			if item == string.lower(ItemLinkToName(link)) then
-				return i, nil, GetInventoryItemTexture('player', i), GetInventoryItemCount('player', i)
+    return ( OldAverage * max(interval - weight * deltaT, 0) + weight * deltaF ) / interval
 			end
-		end
-    end
     
-    -- Look for bags
-	local count, bag, slot, texture
-    local totalcount = 0
+me.prediction.rage_change_event = function()
     
-    for i = 0, 4 do
-        for j = 1, GetContainerNumSlots(i) do
-            link = GetContainerItemLink(i, j)
-            if link then
-                if item == string.lower(ItemLinkToName(link)) then
-                    bag, slot = i, j
-					texture, count = GetContainerItemInfo(i, j)
-					totalcount = totalcount + count
-				end
-            end
-		end
-	end
-	return bag, slot, texture, totalcount;
+    local now = GetTime()
+    local delta_rage = UnitMana("player") - me.rage.old
+    me.rage.old = UnitMana("player")
+    local delta_time = now - me.rage.last_gain
+
+    if delta_rage > 0 then
+
+        me.rage.last_gain = now
+        me.rage.gps_15 = me.prediction.rolling_average(me.rage.gps_15, delta_rage, delta_time, 15)
+        me.rage.gps_5 = me.prediction.rolling_average(me.rage.gps_5, delta_rage, delta_time, 5)
+
+        if me.rage.gps_15 > me.rage.max_gain_15 then
+            me.rage.max_gain_15 = me.rage.gps_15
 end
 
-local function ItemLinkToName(link)
-    -- Copied from SuperMarco.
-	if link then
-   	    return gsub(link,"^.*%[(.*)%].*$","%1");
-	end
+        if me.rage.gps_5 > me.rage.max_gain_5 then
+            me.rage.max_gain_5 = me.rage.gps_5
 end
 
-local function UseItem(item)
-	local bag,slot = FindItem(item)
-	if ( not bag ) then return; end
-	if ( slot ) then
-		UseContainerItem(bag,slot) -- use, equip item in bag
-		return bag, slot
-	else
-		UseInventoryItem(bag) -- use equipped item
-		return bag
-	end
-end
+    elseif delta_time > 5 then
+        me.rage.last_gain = now
+        me.rage.gps_15 = me.prediction.rolling_average(me.rage.gps_15, 0, delta_time, 15)
 
+    elseif delta_time > 1.7 then
+        me.rage.last_gain = now
+        me.rage.gps_5 = me.prediction.rolling_average(me.rage.gps_5, 0, delta_time, 5)
 
-------------------------------------------------------------------------------
--- Buff and Debuff
-------------------------------------------------------------------------------
---[[
-    `mod.my.buffed(buffname [, unit])` takes a localized buffname shown in the game client.
-]]
-me.buffed = function(buffname, unit)
-    
-    if not unit then unit = "player" end
-
-    local tooltip = Aegis_Tooltip
-    local headline = getglobal(tooltip:GetName().."TextLeft1")
-    local slot
-
-    -- Buff 
-    for slot = 1, 32 do
-
-        tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-        tooltip:SetUnitBuff(unit, slot)
-        local text = headline:GetText()
-        tooltip:Hide()
-
-        if text and strfind(text, buffname) then
-            local _, count = UnitBuff(unit, slot)
-            return "buff", slot, text, count
-        elseif not text then
-            break
-        end
     end 
 
-    -- Debuff
-    for slot = 1, 32 do
-
-        tooltip:SetOwner(UIParent, "ANCHOR_NONE")
-        tooltip:SetUnitDebuff(unit, slot)
-        local text = headline:GetText()
-        tooltip:Hide()
-
-        if text and strfind(text, buffname) then
-            local _, count, type = UnitDebuff(unit, slot)
-            return "debuff", slot, text, count, type
-        elseif not text then
-            break
+    -- reset max gain when rage gain average dips below 0.1
+    if me.rage.gps_15 < 0.1 and me.rage.max_gain_15 > 0 then
+        me.rage.max_gain_15 = 0
         end
+
+    if me.rage.gps_5 < 0.1 and me.rage.max_gain_5 > 0 then
+        me.rage.max_gain_5 = 0
     end 
 
-    tooltip:Hide()
 end
 
+me.rage.prediction = function(in_seconds)
+    return me.rage.rage + me.rage.gps_5 * in_seconds
+end
 
-------------------------------------------------------------------------------
--- Rage/Health Tracking and Prediction
-------------------------------------------------------------------------------

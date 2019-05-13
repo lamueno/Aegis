@@ -26,13 +26,25 @@ me.SpellReadyIn = function(name)
     return cd
 end
 
-me.SpellCanCast = function(name, forcedance)
+me.SpellCanCast = function(name, forcedance, in_seconds)
 
     if not forcedance then 
         forcedance = false
     end
     
+    if not in_seconds then
+        in_seconds = 0
+    end
+    
     local local_name = mod.string.get("spell", name)
+
+    -- conserve rage check
+    local conserve = 0
+    if mod.combat.state.conserved_rage[name] then
+        conserve = mod.combat.state.conserved_rage_total - mod.combat.state.conserved_rage[name]
+    else
+        conserve = mod.combat.state.conserved_rage_total
+    end
 
     -- Spellbook check
     if not mod.my.reversespellbook[name] then
@@ -52,8 +64,12 @@ me.SpellCanCast = function(name, forcedance)
     if meta then
         -- Cost
         if meta.cost then
-            if mod.my.rage < meta.cost then
-                mod.output.trace("warning", me, "SpellCanCast", string.format("Not enough rage to cast %s.", tostring(local_name)))
+            if mod.my.rage.rage < meta.cost + conserve and in_seconds == 0 then
+                -- mod.output.trace("warning", me, "SpellCanCast", string.format("Not enough rage to cast %s.", tostring(local_name)))
+                return false
+            
+            elseif mod.my.rage.prediction(in_seconds) < meta.cost + conserve then
+                -- mod.output.trace("warning", me, "SpellCanCast", string.format("Not enough rage to cast %s in %s s", tostring(local_name), in_seconds))
                 return false
             end
         end
@@ -61,7 +77,7 @@ me.SpellCanCast = function(name, forcedance)
         -- Distance
         if meta.distance then
             if mod.my.distance() < meta.distance.min or mod.my.distance() > meta.distance.max then
-                mod.output.trace("warning", me, "SpellCanCast", string.format("Out of range to cast %s, your distance is %s", tostring(local_name), mod.my.distance()))
+                -- mod.output.trace("warning", me, "SpellCanCast", string.format("Out of range to cast %s, your distance is %s", tostring(local_name), mod.my.distance()))
                 return false
             end
         end
