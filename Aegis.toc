@@ -28,3 +28,6 @@ env\Aegis_zhCN.lua
 
 # frame
 Aegis.xml
+
+# gui
+modules\gui.lua
