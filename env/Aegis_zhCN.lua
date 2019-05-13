@@ -1408,4 +1408,25 @@ aegis.string.data["zhCN"]["universal_spell"] = {
     ['黑马']={t=3000,icon='Ability_Mount_NightmareHorse'},
     ['龙灵采集器900型']={t=2000,icon='Temp'},
     ['龙翼攻击']={t=1000,icon='INV_Misc_MonsterScales_14'},
-  }
+}
+
+aegis.string.data["zhCN"]["item"] = {
+    ["Crystal Charge"] = "爆炸水晶",
+    ["Elixir of Greater Agility"] = "强效敏捷药剂",
+    ["Elixir of Greater Defense"] = "强效防御药剂",
+    ["Greater Arcane Protection Potion"] = "强效奥术防护药水",
+    ["Greater Fire Protection Potion"] = "强效火焰防护药水",
+    ["Greater Frost Protection Potion"] = "强效冰霜防护药水",
+    ["Greater Nature Protection Potion"] = "强效自然防护药水",
+    ["Greater Shadow Protection Potion"] = "强效暗影防护药水",
+    ["Greater Stoneshield Potion"] = "强效石盾药水",
+    ["Major Healing Potion"] = "特效治疗药水",
+    ["Major Healthstone"] = "特效治疗石 ",
+    ["Mighty Rage Potion"] = "强效怒气药水",
+}
+
+aegis.string.data["zhCN"]["debuff"] = {
+    ["Brood Affliction: Bronze"] = "龙血之痛：青铜",
+    -- [""] = "",
+}
+
