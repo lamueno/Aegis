@@ -335,7 +335,7 @@ end
 
 me.cast.Execute = function()
 
-    if mod.libspell.SpellCanCast("execute") and me.target.healthpct <= 20 and mod.libspell.SpellReadyIn("execute") == 0 then
+    if mod.libspell.SpellCanCast("execute") and mod.target.healthpct <= 20 and mod.libspell.SpellReadyIn("execute") == 0 then
         if me.cast.standardcast("execute") then
             return true
         end

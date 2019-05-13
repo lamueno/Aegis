@@ -22,10 +22,12 @@ me.statsupdate = function()
     me.name = UnitName("target")
     me.health = UnitHealth("target")
     me.healthmax = UnitHealthMax("target")
+    me.healthpct = me.health / me.healthmax * 100
 
     me.target.name = UnitName("targettarget")
     me.target.health = UnitHealth("targettarget")
     me.target.healthmax = UnitHealthMax("targettarget")
+    me.target.healthpct = me.target.health / me.target.healthmax * 100
 
 end
 
