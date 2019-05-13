@@ -101,10 +101,10 @@ me.trigger.interrupt = function()
 	    or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_BUFF"
 	    or event == "CHAT_MSG_SPELL_CREATURE_VS_CREATURE_BUFF"
         or event == "CHAT_MSG_SPELL_HOSTILEPLAYER_DAMAGE"
-    ) then
+    ) and mod.my.incombat then
         for mob, spell in string.gfind(arg1, mod.string.get("combat", "interrupt", "enable")) do
             local spell = mod.string.get("universal_spell", spell)
-            if mob == UnitName("target") and spell ~= nil then
+            if mob == UnitName("target") and spell ~= "." then
 				me.state.interrupt = {flag="enabled", til=(GetTime() + spell.t / 1000)}
 				return true
 			end
@@ -334,7 +334,7 @@ me.cast.BloodRage = function()
 
     local name = "blood_rage"
 
-    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) then
+    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) ==0 then
         if me.cast.standardcast(name) then
             return true
         end
@@ -460,15 +460,15 @@ me.cast.ShieldSlam = function ()
     local name = "shield_slam"
 
     if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 then
-            CastSpellByName(mod.string.get("spell", name))
-            mod.output.tracespellcast(name)
-            return true
+        CastSpellByName(mod.string.get("spell", name))
+        mod.output.tracespellcast(name)
+        return true
 
     elseif mod.libspell.SpellCanCast(name, nil, 1.5) and mod.libspell.SpellReadyIn(name) <= 1.5 then
-            mod.output.trace("info", me, "cast", mod.string.get("translation", "Shield Slam is almost ready, wait"))
-            return false
-        end
+        mod.output.trace("info", me, "cast", mod.string.get("translation", "Shield Slam is almost ready, wait"))
+        return false
     end
+end
 
 me.cast.SunderArmor = function()
 
@@ -537,7 +537,7 @@ me.cast.tank = function()
 		me.cast.BattleShout,
 		me.cast.BloodRage,
 	}
-	
+    
     me.converse_rage("shield_slam")
 
 	if me.statuscheck() then

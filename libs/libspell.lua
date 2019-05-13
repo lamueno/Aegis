@@ -31,7 +31,7 @@ me.SpellCanCast = function(name, forcedance, in_seconds)
     if not forcedance then 
         forcedance = false
     end
-    
+
     if not in_seconds then
         in_seconds = 0
     end

@@ -15,7 +15,7 @@ me.frame = nil  -- set at runtime
 -- Addon Version
 me.release = 0
 me.revision = 0
-me.build = 3
+me.build = 4
 
 me.events = {}
 me.isloaded = false

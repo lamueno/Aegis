@@ -67,7 +67,7 @@ me.statsupdate = function()
     _, me.armor = UnitArmor("player")
 
 end
-    
+
 mod.my.buffed = function(buffname)
     return mod.libbuff.buffed(buffname, "player")
 end
@@ -114,26 +114,23 @@ me.scantalents = function()
     name, _, _, _, rank, maxrank = GetTalentInfo(1, 1)
     if rank > 0 then
         mod.db.spell["heroic_strike"].cost = 15 - rank
-        debug_talent()
     end
     
 	-- Calculate the rage retainment of Tactical Mastery
     name, _, _, _, rank, maxrank = GetTalentInfo(1, 5)
     me.tactical_mastery = rank * 5
-    debug_talent()
 
     -- Calculate the cost of Thunderclap
     name, _, _, _, rank, maxrank = GetTalentInfo(1, 6)
     if rank > 0 then
         mod.db.spell["heroic_strike"].cost = 20 -  math.pow(2, rank-1)
-        debug_talent()
     end
 
+    --[[
     -- Check for Piercing Howl
 	name, _, _, _, rank, maxrank = GetTalentInfo(2, 6)
     if rank > 0 then
         mod.db.settings["piercing_howl"] = true
-        debug_talent()
 	else
 		mod.db.settings["piercing_howl"] = nil
     end
@@ -142,23 +139,22 @@ me.scantalents = function()
 	name, _, _, _, rank, maxrank = GetTalentInfo(3, 6)
     if rank > 0 then
         mod.db.settings["last_stand"] = true
-        debug_talent()
 	else
 		mod.db.settings["last_stand"] = nil
     end
+    ]]
 
 	-- Calculate the cost of Sunder Armor
     name, _, _, _, rank, maxrank = GetTalentInfo(3, 10)
     if rank > 0 then
         mod.db.spell["sunder_armor"].cost = 15 - rank
-        debug_talent()
     end
     
+    --[[
     -- Check for Concussion Blow
 	name, _, _, _, rank, maxrank = GetTalentInfo(3, 14)
     if rank > 0 then
         mod.db.settings["concussion_blow"] = true
-        debug_talent()
 	else
 		mod.db.settings["concussion_blow"] = nil
     end
@@ -167,10 +163,10 @@ me.scantalents = function()
 	name, _, _, _, rank, maxrank = GetTalentInfo(3, 17)
     if rank > 0 then
         mod.db.settings["shield_slam"] = true
-        debug_talent()
 	else
 		mod.db.settings["shield_slam"] = nil
     end
+    ]]
 
     me.talents = true
 end
@@ -207,7 +203,7 @@ me.scanaction = function()
     -- check if all required distance are found
     for distance, _ in pairs(mod.db.distancetable) do
         if not me.actionslot[distance] then
-            mod.output.print("Any skill at distance [" .. distance .. "] is not found in action bar.")
+            mod.output.trace("warning", me, "scanaction", "Any skill at distance [" .. distance .. "] is not found in action bar.")
             return false
         end
     end
@@ -332,20 +328,20 @@ me.rage = {
     gps_5 = 0,  -- short for gain per second by 5 seconds rolling
     max_gain_15 = 0,
     max_gain_5 = 0
-
-}
     
+}
+
 me.prediction.rolling_average = function(OldAverage, deltaF, deltaT, interval, weight)
     
     -- set default parameter if not given
     local interval = interval or 15
     local weight = weight or 2
-    
+
     return ( OldAverage * max(interval - weight * deltaT, 0) + weight * deltaF ) / interval
-			end
-    
+end
+
 me.prediction.rage_change_event = function()
-    
+
     local now = GetTime()
     local delta_rage = UnitMana("player") - me.rage.old
     me.rage.old = UnitMana("player")
@@ -359,11 +355,11 @@ me.prediction.rage_change_event = function()
 
         if me.rage.gps_15 > me.rage.max_gain_15 then
             me.rage.max_gain_15 = me.rage.gps_15
-end
+        end
 
         if me.rage.gps_5 > me.rage.max_gain_5 then
             me.rage.max_gain_5 = me.rage.gps_5
-end
+        end
 
     elseif delta_time > 5 then
         me.rage.last_gain = now
@@ -373,12 +369,12 @@ end
         me.rage.last_gain = now
         me.rage.gps_5 = me.prediction.rolling_average(me.rage.gps_5, 0, delta_time, 5)
 
-    end 
+    end
 
     -- reset max gain when rage gain average dips below 0.1
     if me.rage.gps_15 < 0.1 and me.rage.max_gain_15 > 0 then
         me.rage.max_gain_15 = 0
-        end
+    end
 
     if me.rage.gps_5 < 0.1 and me.rage.max_gain_5 > 0 then
         me.rage.max_gain_5 = 0
