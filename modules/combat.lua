@@ -411,6 +411,7 @@ end
 me.cast.Revenge = function()
 
     local name = "revenge"
+    local slot = mod.my.actionslot.revenge
     
     local state = me.state.revenge
     if state.flag == "enabled" then 
@@ -424,9 +425,19 @@ me.cast.Revenge = function()
         return
     end
 
-    if mod.libspell.SpellCanCast(name) and mod.libspell.SpellReadyIn(name) == 0 then
-        if me.cast.standardcast(name) then
-            return true
+    if mod.libspell.SpellReadyIn(name) == 0 then
+
+        if slot then
+            if IsUsableAction(slot) == 1 then
+                if me.cast.standardcast(name) then
+                    return true
+                end
+            end
+
+        elseif mod.libspell.SpellCanCast(name) then
+            if me.cast.standardcast(name) then
+                return true
+            end
         end
     end
 
@@ -529,8 +540,8 @@ me.cast.tank = function()
 	local action_sequence = {
         me.cast.AutoAttack,
 		me.cast.stancedance,
-		me.cast.ShieldSlam,
 		me.cast.Revenge,
+		me.cast.ShieldSlam,
 		-- me.cast.ShieldBlock,
 		me.cast.SunderArmor,
 		me.cast.HeroicStrike,

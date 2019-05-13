@@ -184,7 +184,15 @@ me.scanaction = function()
         local text = GetActionText(slot)
         local texture = GetActionTexture(slot)
 
-        if texture then 
+        if texture then
+
+            -- scan for revenge for more accurate cast judgement
+            if not me.actionslot.revenge then
+                if string.find(texture, "Ability_Warrior_Revenge") and text == nil then
+                    me.actionslot.revenge = slot
+                end
+            end
+
             for distance, value in pairs(mod.db.distancetable) do
                 if not me.actionslot[distance] then
                     for _, spell_texture in pairs(value) do
