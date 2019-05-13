@@ -19,6 +19,8 @@ modules\output.lua
 modules\target.lua
 
 # libs
+libs\libbuff.lua
+libs\libitem.lua
 libs\libspell.lua
 
 # locales & translations

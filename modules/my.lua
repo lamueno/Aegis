@@ -63,6 +63,10 @@ me.statsupdate = function()
 
 end
     
+mod.my.buffed = function(buffname)
+    return mod.libbuff.buffed(buffname, "player")
+end
+
 
 ------------------------------------------------------------------------------
 -- Spellbook and Talents

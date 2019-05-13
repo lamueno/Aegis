@@ -34,6 +34,6 @@ end
 -- Buff and Debuff
 ------------------------------------------------------------------------------
 me.buffed = function(buffname)
-    return mod.my.buffed(buffname, "target")
+    return mod.libbuff.buffed(buffname, "target")
 end
     
