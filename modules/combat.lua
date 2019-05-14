@@ -222,7 +222,7 @@ me.statuscheck = function()
     end
 end
 
-me.converse_rage = function(name)
+me.conserve_rage = function(name)
 
     local spell_cost = mod.db.spell[name].cost
     local spell_cd = mod.libspell.SpellReadyIn(name)
@@ -546,7 +546,7 @@ me.cast.LifeSaving = function()
     local danger_health = 2000
     local danger_healthpct = 20
 
-	if mod.my.health < danger_health or mod.my.healthpct < danger_healthpct then
+	if mod.my.health.health < danger_health or mod.my.health.pct < danger_healthpct then
 
 		local item = mod.string.get("item", "Major Healthstone")
 		if mod.libitem.ready(item) then
@@ -560,7 +560,7 @@ me.cast.LifeSaving = function()
 			return true
 		end
 
-		local spell = mod.string.get("spell", "last_stand")
+		local spell = "last_stand"
         if mod.libspell.SpellCanCast(spell) and mod.libspell.SpellReadyIn(spell) == 0 then
             if me.cast.standardcast(spell) then
                 return true
@@ -588,7 +588,7 @@ me.cast.tank = function()
 		me.cast.BloodRage,
 	}
     
-    me.converse_rage("shield_slam")
+    me.conserve_rage("shield_slam")
 
 	if me.statuscheck() then
 		for _, spell in pairs(action_sequence) do

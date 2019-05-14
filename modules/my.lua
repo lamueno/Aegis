@@ -12,6 +12,7 @@ me.myevents = {
     "ACTIONBAR_SLOT_CHANGED",
     "CHARACTER_POINTS_CHANGED",
 
+    "UNIT_HEALTH",
     "UNIT_RAGE",
 }
 
@@ -35,6 +36,9 @@ me.onevent = function()
     if event == "UNIT_RAGE" and arg1 == "player" then
         me.prediction.rage_change_event()
 
+    elseif event == "UNIT_HEALTH" and arg1 == "player" then
+        me.prediction.health_change_event()
+
     elseif event == "CHARACTER_POINTS_CHANGED" then
         me.scantalents()
 
@@ -48,6 +52,7 @@ end
 --      Basic Character Stats          --
 -----------------------------------------
 me.rage = {}
+me.health = {}
 
 -- mod.my.class is the unlocalised lower case representation. e.g. "warrior", "rogue", no matter what locale you are in.
 _, me.class = UnitClass("player")
@@ -60,9 +65,9 @@ me.statsupdate = function()
     
     me.incombat = UnitAffectingCombat("player")
     
-    me.health = UnitHealth("player")
-    me.healthmax = UnitHealthMax("player")
-    me.healthpct = me.health / me.healthmax * 100
+    me.health.health = UnitHealth("player")
+    me.health.max = UnitHealthMax("player")
+    me.health.pct = me.health.health / me.health.max * 100
 
     me.rage.rage = UnitMana("player")
 
@@ -328,28 +333,31 @@ end
 
 
 ------------------------------------------------------------------------------
--- Rage Tracking and Prediction
+-- Rage/Health Tracking and Prediction
 ------------------------------------------------------------------------------
 me.prediction = {}
 
-me.rage = {
-    old = 0,
-    last_gain = 0,
-    gps_15 = 0,  -- short for gain per second by 15 seconds rolling 
-    gps_5 = 0,  -- short for gain per second by 5 seconds rolling
-    max_gain_15 = 0,
-    max_gain_5 = 0
-    
-}
-
-me.prediction.rolling_average = function(OldAverage, deltaF, deltaT, interval, weight)
+me.prediction.rolling_average = function(old, deltaF, deltaT, interval, weight)
     
     -- set default parameter if not given
     local interval = interval or 15
     local weight = weight or 2
 
-    return ( OldAverage * max(interval - weight * deltaT, 0) + weight * deltaF ) / interval
+    return ( old * max(interval - weight * deltaT, 0) + weight * deltaF ) / interval
 end
+
+------------------------------------------------------------------------------
+-- Rage
+
+me.rage = {
+    old = UnitMana("player"),
+    last_gain = 0,
+    gps_15 = 0,  -- short for gain per second by 15 seconds rolling 
+    gps_5 = 0,  -- short for gain per second by 5 seconds rolling
+    max_gps_15 = 0,
+    max_gps_5 = 0
+    
+}
 
 me.prediction.rage_change_event = function()
 
@@ -357,43 +365,137 @@ me.prediction.rage_change_event = function()
     local delta_rage = UnitMana("player") - me.rage.old
     me.rage.old = UnitMana("player")
     local delta_time = now - me.rage.last_gain
+    me.rage.last_gain = now
 
     if delta_rage > 0 then
 
-        me.rage.last_gain = now
         me.rage.gps_15 = me.prediction.rolling_average(me.rage.gps_15, delta_rage, delta_time, 15)
         me.rage.gps_5 = me.prediction.rolling_average(me.rage.gps_5, delta_rage, delta_time, 5)
 
-        if me.rage.gps_15 > me.rage.max_gain_15 then
-            me.rage.max_gain_15 = me.rage.gps_15
+        if me.rage.gps_15 > me.rage.max_gps_15 then
+            me.rage.max_gps_15 = me.rage.gps_15
         end
 
-        if me.rage.gps_5 > me.rage.max_gain_5 then
-            me.rage.max_gain_5 = me.rage.gps_5
+        if me.rage.gps_5 > me.rage.max_gps_5 then
+            me.rage.max_gps_5 = me.rage.gps_5
         end
 
     elseif delta_time > 5 then
-        me.rage.last_gain = now
-        me.rage.gps_15 = me.prediction.rolling_average(me.rage.gps_15, 0, delta_time, 15)
+        me.rage.gps_15 = me.prediction.rolling_average(me.rage.gps_15, 0, 5, 15)
 
     elseif delta_time > 1.7 then
-        me.rage.last_gain = now
-        me.rage.gps_5 = me.prediction.rolling_average(me.rage.gps_5, 0, delta_time, 5)
+        me.rage.gps_5 = me.prediction.rolling_average(me.rage.gps_5, 0, 1.7, 5)
 
     end
 
     -- reset max gain when rage gain average dips below 0.1
-    if me.rage.gps_15 < 0.1 and me.rage.max_gain_15 > 0 then
-        me.rage.max_gain_15 = 0
+    if me.rage.gps_15 < 0.1 and me.rage.max_gps_15 > 0 then
+        me.rage.max_gps_15 = 0
     end
 
-    if me.rage.gps_5 < 0.1 and me.rage.max_gain_5 > 0 then
-        me.rage.max_gain_5 = 0
+    if me.rage.gps_5 < 0.1 and me.rage.max_gps_5 > 0 then
+        me.rage.max_gps_5 = 0
     end 
 
 end
 
 me.rage.prediction = function(in_seconds)
     return me.rage.rage + me.rage.gps_5 * in_seconds
+end
+
+------------------------------------------------------------------------------
+-- Health
+
+me.health = {
+    old = UnitHealth("player"),
+    last_gain = 0,
+    gps_15 = 0,  -- short for gain per second by 15 seconds rolling 
+    gps_5 = 0,  -- short for gain per second by 5 seconds rolling
+    max_gps_15 = 0,
+    max_gps_5 = 0,
+    last_loss = 0,
+    lps_15 = 0,  -- short for loss per second by 15 seconds rolling 
+    lps_5 = 0,  -- short for loss per second by 5 seconds rolling
+    max_lps_15 = 0,
+    max_lps_5 = 0
+    
+}
+
+
+me.prediction.health_change_event = function()
+
+    local now = GetTime()
+    local delta_health = UnitHealth("player") - me.health.old
+    me.health.old = UnitHealth("player")
+
+    if delta_health > 0 then
+        local delta_time = now - me.health.last_gain
+        me.health.last_gain = now
+
+        me.health.gps_15 = me.prediction.rolling_average(me.health.gps_15, delta_health, delta_time, 15)
+        me.health.gps_5 = me.prediction.rolling_average(me.health.gps_5, delta_health, delta_time, 5)
+
+        if me.health.gps_15 > me.health.max_gps_15 then
+            me.health.max_gps_15 = me.health.gps_15
+        end
+
+        if me.health.gps_5 > me.health.max_gps_5 then
+            me.health.max_gps_5 = me.health.gps_5
+        end
+
+        if delta_time > 5 then
+            me.health.gps_15 = me.prediction.rolling_average(me.health.gps_15, 0, 5, 15)
+
+        elseif delta_time > 1.7 then
+            me.health.gps_5 = me.prediction.rolling_average(me.health.gps_5, 0, 1.7, 5)
+        end
+
+    elseif delta_health < 0 then
+        delta_health = -delta_health
+        local delta_time = now - me.health.last_loss
+        me.health.last_loss = now
+
+        me.health.lps_15 = me.prediction.rolling_average(me.health.lps_15, delta_health, delta_time, 15)
+        me.health.lps_5 = me.prediction.rolling_average(me.health.lps_5, delta_health, delta_time, 5)
+
+        if me.health.lps_15 > me.health.max_lps_15 then
+            me.health.max_lps_15 = me.health.lps_15
+        end
+
+        if me.health.lps_5 > me.health.max_lps_5 then
+            me.health.max_lps_5 = me.health.lps_5
+        end
+
+        if delta_time > 5 then
+            me.health.lps_15 = me.prediction.rolling_average(me.health.lps_15, 0, 5, 15)
+
+        elseif delta_time > 1.7 then
+            me.health.lps_5 = me.prediction.rolling_average(me.health.lps_5, 0, 1.7, 5)
+
+        end
+
+    end
+
+    -- reset max when rolling average dips below 0.1
+    if me.health.gps_15 < 0.1 and me.health.max_gps_15 > 0 then
+        me.health.max_gps_15 = 0
+    end
+
+    if me.health.gps_5 < 0.1 and me.health.max_gps_5 > 0 then
+        me.health.max_gps_5 = 0
+    end
+
+    if me.health.lps_15 < 0.1 and me.health.max_lps_15 > 0 then
+        me.health.max_lps_15 = 0
+    end
+
+    if me.health.lps_5 < 0.1 and me.health.max_lps_5 > 0 then
+        me.health.max_lps_5 = 0
+    end 
+
+end
+
+me.health.prediction = function(in_seconds)
+    return me.health.health + (me.health.gps_5 - me.health.lps_5) * in_seconds
 end
 
