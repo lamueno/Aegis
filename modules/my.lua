@@ -27,6 +27,7 @@ end
 me.onupdate = function ()
 
     me.statsupdate()
+    me.health.clear_ra()
 
 end
 
@@ -493,6 +494,21 @@ me.prediction.health_change_event = function()
         me.health.max_lps_5 = 0
     end 
 
+end
+
+me.health.clear_ra = function()
+
+    local no_health_change_time = GetTime() - max(me.health.last_gain, me.health.last_loss)
+    if not me.incombat and no_health_change_time > 60 then
+        me.health.gps_15 = 0
+        me.health.max_gps_15 = 0
+        me.health.gps_5 = 0
+        me.health.max_gps_5 = 0
+        me.health.lps_5 = 0
+        me.health.lps_15 = 0
+        me.health.max_lps_15 = 0
+        me.health.max_lps_5 = 0
+    end
 end
 
 me.health.prediction = function(in_seconds)
