@@ -8,9 +8,9 @@ me.onload = function()
 
 	-- optional debug specification
 	
-	me.setprintstatus("boss", nil, "info", true)
-	me.setprintstatus("boss", "target", "info", false)
-	me.setprintstatus("netin", "message", "info", true)
+	-- me.setprintstatus("boss", nil, "info", true)
+	-- me.setprintstatus("boss", "target", "info", false)
+	-- me.setprintstatus("netin", "message", "info", true)
 
 end
 --[[
@@ -27,7 +27,7 @@ end
 -- These are default printing options. For a release version, error only. For a debug version, maybe warnings too.
 me.default = 
 {
-	info = true,
+	info = false,
 	warning = true,
 	error = true,
 }
