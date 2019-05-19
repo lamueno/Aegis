@@ -1420,6 +1420,7 @@ aegis.string.data["zhCN"]["item"] = {
     ["Greater Nature Protection Potion"] = "强效自然防护药水",
     ["Greater Shadow Protection Potion"] = "强效暗影防护药水",
     ["Greater Stoneshield Potion"] = "强效石盾药水",
+    ["Hourglass Sand"] = "沙漏",
     ["Major Healing Potion"] = "特效治疗药水",
     ["Major Healthstone"] = "特效治疗石 ",
     ["Mighty Rage Potion"] = "强效怒气药水",
